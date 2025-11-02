@@ -1,89 +1,82 @@
-name: Release (tagged)
+name: Release
+
 on:
   push:
-    tags: ['v*']
+    tags:
+      - "v*"
+
 permissions:
   contents: write
-  id-token: write
+  id-token: write   # required if you enable keyless signing later
+
 jobs:
   build:
+    name: Build artifacts
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        goos: [linux, darwin, windows]
+        goos:   [linux, darwin, windows]
         goarch: [amd64, arm64]
+
     steps:
       - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-      - uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
-          cache: true
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+
       - name: Ensure zip is available
         run: sudo apt-get update && sudo apt-get install -y zip
+
       - name: Build
         env:
-          MODULE: github.com/codethor0/ml-dsa-debug-whitepaper
+          GOOS:  ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
         run: |
           mkdir -p dist
-          ext=""
-          if [ "${{ matrix.goos }}" = "windows" ]; then ext=".exe"; fi
-          VER="${GITHUB_REF_NAME#v}"
-          COMMIT="${GITHUB_SHA::7}"
+          BIN="mldsa"
+          OUT="mldsa-${GOOS}-${GOARCH}"
+          [[ "$GOOS" == "windows" ]] && BIN="mldsa.exe" && OUT="mldsa-${GOOS}-${GOARCH}.exe"
+          # Embed version/commit/date via ldflags (same as Makefile)
+          MODULE=$(awk '/^module[[:space:]]/{print $2; exit}' go.mod)
+          VER="${GITHUB_REF_NAME}"    # tag name
+          COMMIT="$(git rev-parse --short HEAD)"
           DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          LDFLAGS="-s -w -X \"$MODULE/internal/version.Version=$VER\" -X \"$MODULE/internal/version.Commit=$COMMIT\" -X \"$MODULE/internal/version.Date=$DATE\""
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
-            go build -trimpath -ldflags "$LDFLAGS" \
-            -o "dist/mldsa_${{ matrix.goos }}_${{ matrix.goarch }}$ext" ./cmd/mldsa
-        run: |
-          mkdir -p dist
-          ext=""
-          if [ "${{ matrix.goos }}" = "windows" ]; then ext=".exe"; fi
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
-            go build -trimpath -ldflags "-s -w" \
-            -o "dist/mldsa_${{ matrix.goos }}_${{ matrix.goarch }}$ext" ./cmd/mldsa
-      - name: Tar/Zip
+          LDF="-s -w -X '${MODULE}/internal/version.Version=${VER}' -X '${MODULE}/internal/version.Commit=${COMMIT}' -X '${MODULE}/internal/version.Date=${DATE}'"
+          GOFLAGS= go build -trimpath -ldflags "$LDF" -o "$OUT" ./cmd/mldsa
+          # zip per-platform
+          ZIP="mldsa-${GOOS}-${GOARCH}.zip"
+          zip -q "$ZIP" "$OUT"
+          mv "$ZIP" dist/
+
       - name: Checksums (SHA256)
         run: |
           cd dist
           sha256sum * > SHA256SUMS.txt
-          cd dist
-          shasum -a 256 * > SHA256SUMS.txt || sha256sum * > SHA256SUMS.txt
-        run: |
-          cd dist
-          for f in *; do
-            base="${f%.*}"
-            if [[ "$f" == *.exe ]]; then
-              zip "${base}.zip" "$f"
-            else
-              tar -czf "${base}.tar.gz" "$f"
-            fi
-          done
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mldsa-binaries
-          path: dist/*
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: sigstore/cosign-installer@v3
-      - name: Cosign sign (keyless) all artifacts
+
+      # Optional: keyless sign each zip (non-fatal if it fails)
+      - name: Cosign (keyless) — optional
+        if: false  # flip to `true` to enable
         env:
           COSIGN_EXPERIMENTAL: "1"
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          for f in dist/*; do
-            cosign sign-blob --yes --output-signature "$f.sig" --output-certificate "$f.pem" "$f"
+          cd dist
+          for f in *.zip; do
+            cosign sign-blob --yes --output-certificate "${f}.pem" --output-signature "${f}.sig" "$f"
           done
-      - uses: actions/download-artifact@v4
-        with:
-          name: mldsa-binaries
-          path: dist
-      - name: Create GitHub Release
+
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          draft: false
+          prerelease: false

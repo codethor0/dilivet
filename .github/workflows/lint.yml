@@ -1,23 +1,29 @@
 name: Lint (golangci-lint)
+
 on:
+  pull_request:
   push:
     branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
+
 permissions:
   contents: read
+
 jobs:
   golangci:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: true  # temporary non-blocking
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: '1.25.x'         # match toolchain used by repo
           cache: true
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.61.0
+          version: v2.6.0              # >= v2.4.0 supports Go 1.25
           args: --timeout 3m
