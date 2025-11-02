@@ -10,19 +10,12 @@ PLATFORMS := darwin/arm64 darwin/amd64 linux/arm64 linux/amd64
 
 all: test
 
-test:
-	go test $(PKG_ALL) -v
-
 bench:
 	go test $(PKG_CLEAN) -bench Benchmark -benchmem -count=1
 
 run:
 	go build -v ./cmd/mldsa
 	./$(BIN) -mode $(MODE) -msg "$(MSG)"
-
-lint:
-	@command -v golangci-lint >/dev/null 2>&1 || $(MAKE) install-lint
-	golangci-lint run
 
 install-lint:
 	@echo "Installing golangci-lint..."
@@ -67,14 +60,6 @@ smoke:
 	./mldsa -mode 87 -msg ok
 
 ## Test (race) + verbose
-test:
-	go test ./... -race -count=1 -v
-
-## Lint if available; otherwise no-op
-lint:
-	@if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run; else echo "golangci-lint not installed; skipping"; fi
-
-## CI convenience
 ci: lint
 	go vet ./...
 	go test ./... -race -count=1 -v
@@ -88,3 +73,11 @@ LDFLAGS     := -s -w -X '$(MODULE)/internal/version.Version=$(VER)' -X '$(MODULE
 
 buildver:
 	GOFLAGS= go build -trimpath -ldflags "$(LDFLAGS)" -o mldsa ./cmd/mldsa
+
+## Canonical test target
+test:
+	go test ./... -race -count=1 -v
+
+## Canonical lint target
+lint:
+	@if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run; else echo "golangci-lint not installed; skipping"; fi
