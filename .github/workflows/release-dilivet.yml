@@ -1,0 +1,58 @@
+name: release-dilivet
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: 'stable' }
+
+      - name: Matrix env
+        id: cfg
+        shell: bash
+        run: |
+          case "${{ matrix.os }}" in
+            ubuntu-latest)  echo "goos=linux"  >> $GITHUB_OUTPUT; echo "ext="    >> $GITHUB_OUTPUT ;;
+            macos-latest)   echo "goos=darwin" >> $GITHUB_OUTPUT; echo "ext="    >> $GITHUB_OUTPUT ;;
+            windows-latest) echo "goos=windows">> $GITHUB_OUTPUT; echo "ext=.exe">> $GITHUB_OUTPUT ;;
+          esac
+          echo "goarch=${{ matrix.arch }}" >> $GITHUB_OUTPUT
+          echo "ver=${GITHUB_REF_NAME#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build mldsa-vet
+        run: |
+          GOOS=${{ steps.cfg.outputs.goos }} GOARCH=${{ steps.cfg.outputs.goarch }} CGO_ENABLED=0 \
+          go build -trimpath -ldflags "-s -w -X main.version=${{ steps.cfg.outputs.ver }}" \
+            -o "dist/mldsa-vet-${{ steps.cfg.outputs.goos }}-${{ steps.cfg.outputs.goarch }}/mldsa-vet${{ steps.cfg.outputs.ext }}" \
+            ./cmd/mldsa-vet
+
+      - name: Build dilivet
+        run: |
+          GOOS=${{ steps.cfg.outputs.goos }} GOARCH=${{ steps.cfg.outputs.goarch }} CGO_ENABLED=0 \
+          go build -trimpath -ldflags "-s -w -X main.version=${{ steps.cfg.outputs.ver }}" \
+            -o "dist/dilivet-${{ steps.cfg.outputs.goos }}-${{ steps.cfg.outputs.goarch }}/dilivet${{ steps.cfg.outputs.ext }}" \
+            ./cmd/dilivet
+
+      - name: Package
+        shell: bash
+        run: |
+          cd dist
+          for dir in mldsa-vet-* dilivet-*; do zip -r "${dir}.zip" "$dir"; done
+          (sha256sum *.zip || shasum -a 256 *.zip) > SHA256SUMS.txt
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip, dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

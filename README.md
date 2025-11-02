@@ -8,3 +8,8 @@ A systematic framework for AI-assisted bug detection in post-quantum cryptograph
 cd code/clean
 go test -v
 ```
+
+### Alias
+```bash
+go install github.com/codethor0/dilivet/cmd/dilivet@latest
+```
