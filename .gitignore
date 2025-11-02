@@ -1,2 +1,9 @@
 mldsa
 mldsa.exe
+dist/
+bin/
+*.zip
+*.exe
+coverage.out
+.DS_Store
+*.log
