@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  id-token: write   # required if you enable keyless signing later
+  id-token: write
 
 jobs:
   build:
@@ -42,14 +42,12 @@ jobs:
           BIN="mldsa"
           OUT="mldsa-${GOOS}-${GOARCH}"
           [[ "$GOOS" == "windows" ]] && BIN="mldsa.exe" && OUT="mldsa-${GOOS}-${GOARCH}.exe"
-          # Embed version/commit/date via ldflags (same as Makefile)
           MODULE=$(awk '/^module[[:space:]]/{print $2; exit}' go.mod)
-          VER="${GITHUB_REF_NAME}"    # tag name
+          VER="${GITHUB_REF_NAME}"
           COMMIT="$(git rev-parse --short HEAD)"
           DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           LDF="-s -w -X '${MODULE}/internal/version.Version=${VER}' -X '${MODULE}/internal/version.Commit=${COMMIT}' -X '${MODULE}/internal/version.Date=${DATE}'"
           GOFLAGS= go build -trimpath -ldflags "$LDF" -o "$OUT" ./cmd/mldsa
-          # zip per-platform
           ZIP="mldsa-${GOOS}-${GOARCH}.zip"
           zip -q "$ZIP" "$OUT"
           mv "$ZIP" dist/
@@ -58,18 +56,6 @@ jobs:
         run: |
           cd dist
           sha256sum * > SHA256SUMS.txt
-
-      # Optional: keyless sign each zip (non-fatal if it fails)
-      - name: Cosign (keyless) — optional
-        if: false  # flip to `true` to enable
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-        continue-on-error: true
-        run: |
-          cd dist
-          for f in *.zip; do
-            cosign sign-blob --yes --output-certificate "${f}.pem" --output-signature "${f}.sig" "$f"
-          done
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
