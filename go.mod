@@ -1,3 +1,3 @@
-module github.com/codethor0/ml-dsa-debug-whitepaper
+module github.com/codethor0/dilivet
 
 go 1.25
