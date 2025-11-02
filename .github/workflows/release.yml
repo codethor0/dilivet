@@ -3,6 +3,7 @@ on:
   push:
     tags: ['v*']
 permissions:
+  id-token: write
   contents: write
 jobs:
   build:
@@ -18,6 +19,19 @@ jobs:
           go-version: '1.22.x'
           cache: true
       - name: Build
+        env:
+          MODULE: github.com/codethor0/ml-dsa-debug-whitepaper
+        run: |
+          mkdir -p dist
+          ext=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then ext=".exe"; fi
+          VER="${GITHUB_REF_NAME#v}"
+          COMMIT="${GITHUB_SHA::7}"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          LDFLAGS="-s -w -X \"$MODULE/internal/version.Version=$VER\" -X \"$MODULE/internal/version.Commit=$COMMIT\" -X \"$MODULE/internal/version.Date=$DATE\""
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
+            go build -trimpath -ldflags "$LDFLAGS" \
+            -o "dist/mldsa_${{ matrix.goos }}_${{ matrix.goarch }}$ext" ./cmd/mldsa
         run: |
           mkdir -p dist
           ext=""
@@ -26,6 +40,10 @@ jobs:
             go build -trimpath -ldflags "-s -w" \
             -o "dist/mldsa_${{ matrix.goos }}_${{ matrix.goarch }}$ext" ./cmd/mldsa
       - name: Tar/Zip
+      - name: Checksums (SHA256)
+        run: |
+          cd dist
+          shasum -a 256 * > SHA256SUMS.txt || sha256sum * > SHA256SUMS.txt
         run: |
           cd dist
           for f in *; do
@@ -44,6 +62,15 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: sigstore/cosign-installer@v3
+      - name: Cosign sign (keyless) all artifacts
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          for f in dist/*; do
+            cosign sign-blob --yes --output-signature "$f.sig" --output-certificate "$f.pem" "$f"
+          done
       - uses: actions/download-artifact@v4
         with:
           name: mldsa-binaries

@@ -78,3 +78,13 @@ lint:
 ci: lint
 	go vet ./...
 	go test ./... -race -count=1 -v
+
+## Build with embedded version info (tag/commit/date)
+MODULE      := $(shell awk '/^module[[:space:]]/{print $$2; exit}' go.mod)
+VER         ?= $(shell git describe --tags --always --dirty=-dev 2>/dev/null || echo dev)
+COMMIT      := $(shell git rev-parse --short HEAD)
+DATE        := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS     := -s -w -X '$(MODULE)/internal/version.Version=$(VER)' -X '$(MODULE)/internal/version.Commit=$(COMMIT)' -X '$(MODULE)/internal/version.Date=$(DATE)'
+
+buildver:
+	GOFLAGS= go build -trimpath -ldflags "$(LDFLAGS)" -o mldsa ./cmd/mldsa
