@@ -59,3 +59,22 @@ release:
 
 clean:
 	rm -rf $(RELEASE_DIR) coverage.out
+
+## Run quick CLI smoke for ML-DSA 44/65/87
+smoke:
+	./mldsa -mode 44 -msg ok
+	./mldsa -mode 65 -msg ok
+	./mldsa -mode 87 -msg ok
+
+## Test (race) + verbose
+test:
+	go test ./... -race -count=1 -v
+
+## Lint if available; otherwise no-op
+lint:
+	@if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run; else echo "golangci-lint not installed; skipping"; fi
+
+## CI convenience
+ci: lint
+	go vet ./...
+	go test ./... -race -count=1 -v

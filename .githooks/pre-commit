@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+scripts/verify_mod.sh
+go fmt ./...
+go vet ./...
+if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run; fi
+git add -A
