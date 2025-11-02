@@ -20,4 +20,6 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: Run govulncheck
         run: |
+        run: |
+          "$(go env GOPATH)"/bin/govulncheck ./... || true
           "$(go env GOPATH)/bin/govulncheck" ./...

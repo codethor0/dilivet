@@ -3,8 +3,8 @@ on:
   push:
     tags: ['v*']
 permissions:
-  id-token: write
   contents: write
+  id-token: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,10 +14,14 @@ jobs:
         goarch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
           cache: true
+      - name: Ensure zip is available
+        run: sudo apt-get update && sudo apt-get install -y zip
       - name: Build
         env:
           MODULE: github.com/codethor0/ml-dsa-debug-whitepaper
@@ -42,6 +46,8 @@ jobs:
       - name: Tar/Zip
       - name: Checksums (SHA256)
         run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
           cd dist
           shasum -a 256 * > SHA256SUMS.txt || sha256sum * > SHA256SUMS.txt
         run: |
