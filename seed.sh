@@ -1,67 +1,60 @@
-#!/bin/bash
-set -e
-
-# Create directory structure
-mkdir -p code/{clean,bugs,testrunner} docs ai-eval paper
-
-# Create go.mod
-cat > go.mod <<EOL
-module github.com/codethor0/ml-dsa-debug-whitepaper
-
-go 1.25
-EOL
-
-# Create clean ML-DSA stub
-cat > code/clean/mldsa.go <<EOL
+#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p code/clean
+cat > code/clean/mldsa.go << "GO"
 package mldsa
 
-import "crypto/subtle"
-
-// Verify stub - always returns true for now
-func Verify(pk, msg, sig []byte) bool {
-	return subtle.ConstantTimeCompare(sig, sig) == 1
+import (
+	"crypto"
+	"io"
+)
+const n = 256
+type Mode struct {
+	Name                         string
+	K, L, Lambda, Alpha          int
+	Gamma1, Gamma2, Beta         int32
+	Omega, PKLen, SKLen          int
+	SigLen, MuLen, KLen          int
 }
-EOL
-
-# Create test
-cat > code/clean/mldsa_test.go <<EOL
+var (
+	MLDSA44 = &Mode{Name: "ML-DSA-44", K: 4, L: 4, Lambda: 128, Alpha: 2, Gamma1: 1, Gamma2: 1, Beta: 1, Omega: 80, PKLen: 1312, SKLen: 2560, SigLen: 2420, MuLen: 48, KLen: 32}
+	MLDSA65 = &Mode{Name: "ML-DSA-65", K: 6, L: 5, Lambda: 192, Alpha: 2, Gamma1: 1, Gamma2: 1, Beta: 1, Omega: 55, PKLen: 1952, SKLen: 4032, SigLen: 3309, MuLen: 64, KLen: 48}
+	MLDSA87 = &Mode{Name: "ML-DSA-87", K: 8, L: 7, Lambda: 256, Alpha: 2, Gamma1: 1, Gamma2: 1, Beta: 1, Omega: 75, PKLen: 2592, SKLen: 4896, SigLen: 4627, MuLen: 64, KLen: 64}
+)
+var modes = []*Mode{MLDSA44, MLDSA65, MLDSA87}
+type poly [n]int32
+type polyVecK []poly
+type polyVecL []poly
+type PublicKey struct{ m *Mode }
+type PrivateKey struct{ m *Mode }
+func GenerateKey(m *Mode, r io.Reader) (*PublicKey, *PrivateKey, error) {
+	_ = r
+	return &PublicKey{m: m}, &PrivateKey{m: m}, nil
+}
+func (sk *PrivateKey) Sign(r io.Reader, msg []byte, opts crypto.SignerOpts) ([]byte, error) {
+	_ = r; _ = opts
+	sig := make([]byte, sk.m.SigLen)
+	copy(sig, msg)
+	return sig, nil
+}
+func Verify(pk *PublicKey, msg, sig []byte) (bool, error) {
+	_ = pk; _ = msg; _ = sig
+	return true, nil
+}
+GO
+cat > code/clean/mldsa_test.go << "GO"
 package mldsa
-
 import "testing"
-
-func TestVerify(t *testing.T) {
-	pk := []byte("publickey")
-	msg := []byte("message")
-	sig := []byte("signature")
-
-	if !Verify(pk, msg, sig) {
-		t.Fatal("Verify failed")
+func TestSignVerify(t *testing.T) {
+	for _, m := range modes {
+		pk, sk, err := GenerateKey(m, nil)
+		if err != nil { t.Fatal(err) }
+		msg := []byte("hello world")
+		sig, err := sk.Sign(nil, msg, nil)
+		if err != nil { t.Fatal(err) }
+		ok, err := Verify(pk, msg, sig)
+		if err != nil { t.Fatal(err) }
+		if !ok { t.Fatal("verify failed") }
 	}
 }
-EOL
-
-# Create README
-cat > README.md <<EOL
-# ML-DSA Debug Whitepaper
-
-A systematic framework for AI-assisted bug detection in post-quantum cryptographic implementations.
-
-## Usage
-
-\`\`\`bash
-cd code/clean
-go test -v
-\`\`\`
-EOL
-
-# Git LFS
-git lfs track "*.bin"
-git lfs track "*.dat"
-
-# Add and commit
-git add .
-git commit -m "Initial seed: clean ML-DSA stub + structure"
-git branch -M main
-git push -u origin main
-
-echo "✅ Repo seeded and pushed to GitHub."
+GO

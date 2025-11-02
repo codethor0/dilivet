@@ -1,0 +1,23 @@
+name: Vulnerability Scan (govulncheck)
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
+          work-dir: .

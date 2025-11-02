@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "pre-push: verify module/imports"
+scripts/verify_mod.sh
+echo "pre-push: vet"
+go vet ./...
+echo "pre-push: unit tests (race)"
+go test ./... -race -count=1 -v
+if command -v staticcheck >/dev/null 2>&1; then
+  echo "pre-push: staticcheck"
+  staticcheck ./...
+fi

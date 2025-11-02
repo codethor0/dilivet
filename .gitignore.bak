@@ -1,0 +1,10 @@
+# general
+.DS_Store
+.zsh_sessions/
+coverage.out
+*.log
+
+# go
+bin/
+dist/
+mldsa
