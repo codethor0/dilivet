@@ -1,14 +1,12 @@
 name: Vulnerability Scan (govulncheck)
 
 on:
+  pull_request:
   push:
     branches: ["**"]
-  pull_request:
-  schedule:
-    - cron: "0 9 * * *"
 
 jobs:
-  govuln:
+  govulncheck:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -16,7 +14,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.x'
+          go-version-file: go.mod
           cache: true
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1

@@ -1,5 +1,4 @@
 name: Release
-
 on:
   push:
     tags:
@@ -39,9 +38,8 @@ jobs:
           CGO_ENABLED: 0
         run: |
           mkdir -p dist
-          BIN="mldsa"
           OUT="mldsa-${GOOS}-${GOARCH}"
-          [[ "$GOOS" == "windows" ]] && BIN="mldsa.exe" && OUT="mldsa-${GOOS}-${GOARCH}.exe"
+          [[ "$GOOS" == "windows" ]] && OUT="mldsa-${GOOS}-${GOARCH}.exe"
           MODULE=$(awk '/^module[[:space:]]/{print $2; exit}' go.mod)
           VER="${GITHUB_REF_NAME}"
           COMMIT="$(git rev-parse --short HEAD)"

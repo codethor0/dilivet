@@ -1,24 +1,28 @@
-name: Lint
+name: Lint (golangci-lint)
 
 on:
+  pull_request:
   push:
     branches: ["**"]
-  pull_request:
 
 jobs:
   golangci:
     runs-on: ubuntu-latest
-    # Make lint non-blocking until we decide to enforce again
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25.x'
           cache: true
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --timeout 3m
+
+      # Build the linter with the same Go toolchain as the repo
+      - name: Install golangci-lint from source
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Run golangci-lint
+        run: golangci-lint run --timeout 5m
