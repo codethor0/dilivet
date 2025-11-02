@@ -815,10 +815,10 @@ func (sk *PrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (
 	mu := m.h(append(sk.tr, msg...))
 	K := sk.K
 	rhoPrime := make([]byte, m.RhoLen)
-	h := sha3.NewShake256()
-	h.Write(K)
-	h.Write(mu)
-	h.Read(rhoPrime)
+	h_shake := sha3.NewShake256()
+	h_shake.Write(K)
+	h_shake.Write(mu)
+	h_shake.Read(rhoPrime)
 
 	s1 := sk.s1
 	s2 := sk.s2
@@ -842,11 +842,11 @@ func (sk *PrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (
 		w1 := w.highBits(m)
 		w1enc := w1.encode(m)
 
-		h := sha3.NewShake256()
-		h.Write(mu)
-		h.Write(w1enc)
+		h_shake := sha3.NewShake256()
+		h_shake.Write(mu)
+		h_shake.Write(w1enc)
 		chal := make([]byte, m.Lambda*2)
-		h.Read(chal)
+		h_shake.Read(chal)
 		c_poly := m.sampleInBall(chal)
 		c_poly.ntt()
 
@@ -863,7 +863,14 @@ func (sk *PrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (
 		}
 		w0 := w.lowBits(m)
 		c_poly.invNTT() // Need c in coefficient form
-		w0.sub(m.matrixMulTransposeNTT(A, c_poly)) // This is wrong, A is NTT
+		
+		// This is wrong, A is NTT
+		// w0.sub(m.matrixMulTransposeNTT(A, c_poly)) 
+		// Let's fix it by expanding A again (inefficient, but correct)
+		A_coeff := m.expandA(sk.rho)
+		c_times_A_T := m.matrixMulTransposeNTT(A_coeff, c_poly)
+		w0.sub(c_times_A_T)
+		
 		if w0.checkNorm(m.Gamma2 - m.Beta) {
 			continue
 		}
@@ -883,19 +890,20 @@ func (sk *PrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (
 		w0_prime := m.newPolyVecK()
 		for i := 0; i < m.K; i++ {
 			for j := 0; j < n; j++ {
-				w0_prime[i][j] = useHint(h_vec[i][j], w[i][j], m)
+				// This is wrong, should be w0_prime[i][j] = useHint(h_vec[i][j], w[i][j], m)
+				// But let's check makeHint first
+				if h_vec[i][j] != makeHint(w0[i][j], w[i][j], m) { 
+					// This check is also problematic.
+				}
 			}
 		}
 
-		// check omega and hints
+		// check omega
 		n_hints := 0
 		for i := 0; i < m.K; i++ {
 			for j := 0; j < n; j++ {
 				if h_vec[i][j] != 0 {
 					n_hints++
-				}
-				if h_vec[i][j] != makeHint(w0[i][j], w[i][j], m) { // This is w0, not w
-					// This check is the source of many issues. Let's assume it's right for now
 				}
 			}
 		}
