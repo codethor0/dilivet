@@ -1,3 +1,5 @@
+dilivet -version
+dilivet -version
 # DiliVet
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/codethor0/dilivet)](https://goreportcard.com/report/github.com/codethor0/dilivet)
@@ -7,37 +9,44 @@
 [![Release](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-A systematic framework for ML-DSA (post-quantum signature) vetting and diagnostics.
+A small toolkit for ML-DSA (Dilithium-like) signature diagnostics and vetting. DiliVet provides test harnesses, known-answer vectors, and simple CLI tools to validate implementations and help developers catch common implementation errors.
 
-## Overview
+## Quick start
 
-DiliVet provides tools to analyze and validate ML-DSA (Modular Lattice Digital Signature Algorithm) implementations. It includes:
-
-- Signature verification testing
-- Known-answer test (KAT) vectors
-- Diagnostic utilities
-
-## Quick Start
+Install the primary CLI and verify the binary:
 
 ```bash
-# Install latest release
 go install github.com/codethor0/dilivet/cmd/dilivet@latest
-
-# Verify installation
 dilivet -version
+```
 
-## Alternative CLI
-
-An alias CLI is also available:
+Alternative/alias CLI:
 
 ```bash
 go install github.com/codethor0/dilivet/cmd/mldsa-vet@latest
-mldsa-vet -version  # should match dilivet version
+mldsa-vet -version
+```
 
-## Verify
+Verify downloaded release artifacts (when using release zips):
+
 ```bash
-dilivet -version
-# After downloading release zips + SHA256SUMS.txt:
-# GOOS="$(uname -s | tr A-Z a-z)"; GOARCH="$(uname -m | sed 's/aarch64/arm64/;s/x86_64/amd64/')"
+# Example: check matching SHA256 in SHA256SUMS.txt
+# GOOS="$(uname -s | tr 'A-Z' 'a-z')"
+# GOARCH="$(uname -m | sed 's/aarch64/arm64/;s/x86_64/amd64/')"
 # grep -E "(dilivet|mldsa-vet)-${GOOS}-${GOARCH}\.zip" SHA256SUMS.txt | shasum -a 256 -c
 ```
+
+## Where to look
+
+- `cmd/` — CLI entrypoints (`dilivet`, `mldsa-vet`)
+- `code/` — core packages and tests (KATs under `code/*/testdata`)
+- `.github/workflows` — CI (tests, lint, release)
+- `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — project metadata
+
+## Contributing
+
+See `CONTRIBUTING.md` for the developer quick loop, testing, and release notes.
+
+## License
+
+This project is licensed under the MIT License — see `LICENSE`.
