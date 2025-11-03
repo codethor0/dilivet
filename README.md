@@ -1,23 +1,31 @@
-# ML-DSA Debug Whitepaper
+# DiliVet
 
-A systematic framework for AI-assisted bug detection in post-quantum cryptographic implementations.
+A systematic framework for ML-DSA (post-quantum signature) vetting and diagnostics.
 
-## Usage
+## Overview
+
+DiliVet provides tools to analyze and validate ML-DSA (Modular Lattice Digital Signature Algorithm) implementations. It includes:
+
+- Signature verification testing
+- Known-answer test (KAT) vectors
+- Diagnostic utilities
+
+## Quick Start
 
 ```bash
-cd code/clean
-go test -v
-```
-
-### Alias
-```bash
+# Install latest release
 go install github.com/codethor0/dilivet/cmd/dilivet@latest
-```
 
-## Install
+# Verify installation
+dilivet -version
+
+## Alternative CLI
+
+An alias CLI is also available:
+
 ```bash
-go install github.com/codethor0/dilivet/cmd/dilivet@latest
-```
+go install github.com/codethor0/dilivet/cmd/mldsa-vet@latest
+mldsa-vet -version  # should match dilivet version
 
 ## Verify
 ```bash
