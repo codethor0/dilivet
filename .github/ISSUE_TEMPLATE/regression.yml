@@ -1,0 +1,60 @@
+name: Regression Report
+description: Report something that used to work but is now broken
+title: "[Regression]: "
+labels: ["bug", "regression", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Regressions are high priority.
+
+  - type: input
+    id: last-working
+    attributes:
+      label: Last working version
+      description: "e.g., v0.1.2"
+      placeholder: "v0.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: first-broken
+    attributes:
+      label: First broken version
+      description: "e.g., v0.2.0"
+      placeholder: "v0.2.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-broke
+    attributes:
+      label: What broke?
+      description: Describe the behavior that changed
+      placeholder: "`dilivet -version` now panics instead of printing version"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal reproduction case
+      placeholder: |
+        1. `go install github.com/codethor0/dilivet/cmd/dilivet@v0.2.0`
+        2. `dilivet -version`
+        3. See panic
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "OS, Go version, etc."
+      placeholder: |
+        - OS: macOS 14.3
+        - Go: 1.25.3
+        - Arch: arm64
+    validations:
+      required: true

@@ -1,0 +1,18 @@
+# CODEOWNERS for github.com/codethor0/dilivet
+# Each line specifies a pattern and one or more owners.
+# Owners are auto-requested as reviewers on PRs touching those paths.
+
+# Default: primary maintainer owns everything
+* @codethor0
+
+# Workflows and CI changes require maintainer approval
+/.github/workflows/ @codethor0
+/go.mod @codethor0
+/go.sum @codethor0
+
+# Core crypto logic
+/code/clean/ @codethor0
+
+# Security-sensitive configs
+/SECURITY.md @codethor0
+/.github/dependabot.yml @codethor0

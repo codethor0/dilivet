@@ -7,6 +7,7 @@ dilivet -version
 [![Go Test](https://github.com/codethor0/dilivet/actions/workflows/go-test.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/go-test.yml)
 [![Lint](https://github.com/codethor0/dilivet/actions/workflows/lint.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/lint.yml)
 [![Release](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/dilivet/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/dilivet)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 A small toolkit for ML-DSA (Dilithium-like) signature diagnostics and vetting. DiliVet provides test harnesses, known-answer vectors, and simple CLI tools to validate implementations and help developers catch common implementation errors.
@@ -42,6 +43,12 @@ Verify downloaded release artifacts (when using release zips):
 - `code/` — core packages and tests (KATs under `code/*/testdata`)
 - `.github/workflows` — CI (tests, lint, release)
 - `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — project metadata
+
+## Support
+
+- **Questions?** Open a [Discussion](https://github.com/codethor0/dilivet/discussions)
+- **Bug?** File an [Issue](https://github.com/codethor0/dilivet/issues/new?template=bug_report.yml)
+- **Security?** See [SECURITY.md](./SECURITY.md)
 
 ## Contributing
 
