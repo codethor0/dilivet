@@ -1,4 +1,4 @@
-# ML-DSA Debug Whitepaper
+# ML-DSA Debugger
 
 A systematic framework for AI-assisted bug detection in post-quantum cryptographic implementations.
 
