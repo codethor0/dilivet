@@ -12,4 +12,4 @@ jobs:
           # Use the latest golangci-lint but build it with the runner's Go toolchain (1.25.x)
           # to satisfy: linter build Go version >= target module Go version
           version: latest
-          install-mode: go
+          install-mode: goinstall
