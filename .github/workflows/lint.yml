@@ -7,9 +7,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with: { go-version: 'stable' }
-      - uses: golangci/golangci-lint-action@v6
-        with:
-          # Use the latest golangci-lint but build it with the runner's Go toolchain (1.25.x)
-          # to satisfy: linter build Go version >= target module Go version
-          version: latest
-          install-mode: goinstall
+      # Install golangci-lint built with the runner's Go toolchain to avoid Go version mismatch
+      - name: Install golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+          golangci-lint version
+      - name: Run golangci-lint
+        run: golangci-lint run
