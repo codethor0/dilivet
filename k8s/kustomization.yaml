@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: default
+
+resources:
+- deployment.yaml
+- service.yaml
+- configmap.yaml
+
+commonLabels:
+  app.kubernetes.io/name: dilivet
+  app.kubernetes.io/component: ml-dsa-diagnostics
+  app.kubernetes.io/part-of: post-quantum-crypto
+
+images:
+- name: ghcr.io/codethor0/dilivet
+  newTag: v0.1.10

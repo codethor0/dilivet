@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dilivet
+  labels:
+    app: dilivet
+    version: v0.1.10
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dilivet
+  template:
+    metadata:
+      labels:
+        app: dilivet
+        version: v0.1.10
+    spec:
+      containers:
+      - name: dilivet
+        image: ghcr.io/codethor0/dilivet:v0.1.10
+        imagePullPolicy: IfNotPresent
+        command: ["/dilivet"]
+        args: ["-version"]
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL

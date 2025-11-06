@@ -1,18 +1,17 @@
 package main
 
 import (
-	"flag"
-	"fmt"
+	"os"
+
+	"github.com/codethor0/dilivet/code/cli"
 )
 
 var version = "dev"
 
 func main() {
-	v := flag.Bool("version", false, "print version and exit")
-	flag.Parse()
-	if *v {
-		fmt.Println(version)
-		return
+	app := &cli.App{
+		Name:    "mldsa-vet",
+		Version: version,
 	}
-	fmt.Println("DiliVet - ML-DSA vetting tool. Use -version to print version.")
+	os.Exit(app.Run(os.Args[1:]))
 }

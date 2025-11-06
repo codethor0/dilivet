@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dilivet-config
+  labels:
+    app: dilivet
+data:
+  # ML-DSA parameter sets configuration
+  parameter-sets: "ML-DSA-44,ML-DSA-65,ML-DSA-87"
+  
+  # Logging configuration
+  log-level: "info"
+  log-format: "json"
+  
+  # Runtime configuration
+  max-workers: "4"
