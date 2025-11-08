@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 
 	"github.com/codethor0/dilivet/code/cli"
@@ -9,9 +10,15 @@ import (
 var version = "dev"
 
 func main() {
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+func run(args []string, stdout, stderr io.Writer) int {
 	app := &cli.App{
 		Name:    "dilivet",
 		Version: version,
+		Out:     stdout,
+		Err:     stderr,
 	}
-	os.Exit(app.Run(os.Args[1:]))
+	return app.Run(args)
 }

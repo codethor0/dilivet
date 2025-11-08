@@ -88,6 +88,22 @@ func TestVerify_InvalidSignatureLength(t *testing.T) {
 	}
 }
 
+// TestVerify_UnknownPublicKeyLength rejects unsupported parameter sets
+func TestVerify_UnknownPublicKeyLength(t *testing.T) {
+	pk := make([]byte, 1024)  // Unsupported public key length
+	msg := []byte("message")  // Valid message
+	sig := make([]byte, 2048) // Random signature length
+
+	valid, err := Verify(pk, msg, sig)
+
+	if !errors.Is(err, ErrInvalidPublicKey) {
+		t.Errorf("Expected ErrInvalidPublicKey for unknown pk length, got %v", err)
+	}
+	if valid {
+		t.Error("Unknown parameter set should return false")
+	}
+}
+
 // TestVerify_AllParameterSets tests all ML-DSA parameter set dimensions
 func TestVerify_AllParameterSets(t *testing.T) {
 	tests := []struct {

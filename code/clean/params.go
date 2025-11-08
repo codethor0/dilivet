@@ -1,5 +1,7 @@
 package mldsa
 
+import "errors"
+
 // Params defines the cryptographic parameters for a specific ML-DSA security level.
 //
 // ML-DSA supports three parameter sets corresponding to different NIST
@@ -119,5 +121,5 @@ const (
 
 var (
 	// ErrInvalidParams is returned when parameter validation fails
-	ErrInvalidParams = ErrInvalidPublicKey // Alias for now
+	ErrInvalidParams = errors.New("mldsa: invalid parameter set")
 )

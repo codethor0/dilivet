@@ -1,3 +1,3 @@
 module github.com/codethor0/dilivet
 
-go 1.25
+go 1.22

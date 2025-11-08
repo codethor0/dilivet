@@ -16,6 +16,12 @@ import (
 	"errors"
 )
 
+var validParamSets = map[int][]int{
+	1312: {2420}, // ML-DSA-44
+	1952: {3309}, // ML-DSA-65
+	2592: {4627}, // ML-DSA-87
+}
+
 // Common errors returned by ML-DSA operations
 var (
 	ErrInvalidPublicKey = errors.New("mldsa: invalid public key format")
@@ -56,26 +62,20 @@ func Verify(pk, msg, sig []byte) (bool, error) {
 	}
 
 	// Phase 2: Length validation for known parameter sets
-	// ML-DSA-44: pk=1312, sig=2420
-	// ML-DSA-65: pk=1952, sig=3309
-	// ML-DSA-87: pk=2592, sig=4627
-	validLengths := map[int][]int{
-		1312: {2420}, // ML-DSA-44
-		1952: {3309}, // ML-DSA-65
-		2592: {4627}, // ML-DSA-87
+	sigLengths, ok := validParamSets[len(pk)]
+	if !ok {
+		return false, ErrInvalidPublicKey
 	}
 
-	if sigLengths, ok := validLengths[len(pk)]; ok {
-		valid := false
-		for _, expected := range sigLengths {
-			if len(sig) == expected {
-				valid = true
-				break
-			}
+	valid := false
+	for _, expected := range sigLengths {
+		if len(sig) == expected {
+			valid = true
+			break
 		}
-		if !valid {
-			return false, ErrInvalidSignature
-		}
+	}
+	if !valid {
+		return false, ErrInvalidSignature
 	}
 
 	// Phase 3: TODO - Implement full FIPS 204 Algorithm 3
