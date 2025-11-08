@@ -1,3 +1,14 @@
 #!/bin/sh
-command -v git-lfs >/dev/null 2>&1 || { echo >&2 "\nThis repository is configured for Git LFS but 'git-lfs' was not found on your path. If you no longer wish to use Git LFS, remove this hook by deleting the 'pre-push' file in the hooks directory (set by 'core.hookspath'; usually '.git/hooks').\n"; exit 2; }
+
+if ! command -v git-lfs >/dev/null 2>&1; then
+	cat >&2 <<'EOF'
+
+warning: Git LFS is not installed; skipping git-lfs pre-push hook.
+Install https://git-lfs.com/ if you intend to push LFS-managed objects.
+
+EOF
+	exit 0
+fi
+
 git lfs pre-push "$@"
+

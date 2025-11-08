@@ -40,7 +40,8 @@ Verify downloaded release artifacts (when using release zips):
 ## Where to look
 
 - `cmd/` — CLI entrypoints (`dilivet`, `mldsa-vet`)
-- `code/` — core packages and tests (KATs under `code/*/testdata`)
+- `code/` — core packages and tests (official ML-DSA KAT loaders live in `code/clean/kats`)
+- `code/clean/testdata/kats/ml-dsa/` — bundled FIPS 204 ACVP vectors for offline testing
 - `.github/workflows` — CI (tests, lint, release)
 - `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — project metadata
 
@@ -57,3 +58,15 @@ See `CONTRIBUTING.md` for the developer quick loop, testing, and release notes.
 ## License
 
 This project is licensed under the MIT License — see `LICENSE`.
+
+---
+
+### Test vectors
+
+The repository ships with the official FIPS 204 specification (`code/clean/testdata/fips_204.pdf`) and ACVP “internalProjection” JSON fixtures in `code/clean/testdata/kats/ml-dsa/`. You can sanity-check the parser and data integrity with:
+
+```bash
+go test ./code/clean/kats
+```
+
+If NIST republishes updated vectors, drop the new JSON files in the same directory and extend the loader tests as needed.
