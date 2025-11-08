@@ -28,6 +28,12 @@ go install github.com/codethor0/dilivet/cmd/mldsa-vet@latest
 mldsa-vet -version
 ```
 
+Verify a signature (public key and signature files hex-encoded by default):
+
+```bash
+dilivet verify -pub path/to/pk.hex -sig path/to/sig.hex -msg path/to/message.bin
+```
+
 Verify downloaded release artifacts (when using release zips):
 
 ```bash

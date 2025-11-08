@@ -59,8 +59,22 @@ func (a *App) Run(args []string) int {
 		return 0
 	}
 
+	// Handle subcommands
+	if fs.NArg() > 0 {
+		cmd := fs.Arg(0)
+		args := fs.Args()[1:]
+
+		switch cmd {
+		case "verify":
+			return a.runVerify(args)
+		default:
+			fmt.Fprintf(a.Err, "unknown command %q\n", cmd)
+			return 1
+		}
+	}
+
 	// Default behavior: print usage message
-	fmt.Fprintf(a.Out, "%s - ML-DSA vetting tool. Use -version to print version.\n", a.Name)
+	fmt.Fprintf(a.Out, "%s - ML-DSA vetting tool. Use -help for available commands.\n", a.Name)
 	return 0
 }
 
@@ -74,7 +88,10 @@ DESCRIPTION:
     post-quantum cryptographic implementations.
 
 USAGE:
-    %s [OPTIONS]
+    %s [OPTIONS] <command>
+
+COMMANDS:
+    verify      Validate an ML-DSA signature against a public key
 
 OPTIONS:
     -version    Print version and exit
@@ -84,8 +101,8 @@ EXAMPLES:
     %s -version
         Print the version number
 
-    %s
-        Show default usage message
+    %s verify -pub pk.hex -sig sig.hex -msg msg.bin
+        Verify a signature using hex-encoded key/signature files
 
 DOCUMENTATION:
     GitHub: https://github.com/codethor0/dilivet

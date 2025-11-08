@@ -2,6 +2,9 @@ package cli
 
 import (
 	"bytes"
+	"encoding/hex"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -125,5 +128,67 @@ func TestApp_MultipleFlags(t *testing.T) {
 				t.Errorf("Expected %q in output, got: %s", tt.wantOut, out.String())
 			}
 		})
+	}
+}
+
+func TestApp_VerifyCommand(t *testing.T) {
+	tDir := t.TempDir()
+
+	pub := bytes.Repeat([]byte{0xAA}, 1312)
+	sig := bytes.Repeat([]byte{0xBB}, 2420)
+	msg := []byte("hello world")
+
+	pubPath := filepath.Join(tDir, "pk.hex")
+	sigPath := filepath.Join(tDir, "sig.hex")
+	msgPath := filepath.Join(tDir, "msg.bin")
+
+	if err := os.WriteFile(pubPath, []byte(hex.EncodeToString(pub)), 0o600); err != nil {
+		t.Fatalf("write pub: %v", err)
+	}
+	if err := os.WriteFile(sigPath, []byte(hex.EncodeToString(sig)), 0o600); err != nil {
+		t.Fatalf("write sig: %v", err)
+	}
+	if err := os.WriteFile(msgPath, msg, 0o600); err != nil {
+		t.Fatalf("write msg: %v", err)
+	}
+
+	var out, errOut bytes.Buffer
+	app := &App{
+		Name:    "dilivet",
+		Version: "dev",
+		Out:     &out,
+		Err:     &errOut,
+	}
+
+	exitCode := app.Run([]string{
+		"verify",
+		"-pub", pubPath,
+		"-sig", sigPath,
+		"-msg", msgPath,
+	})
+
+	if exitCode != 0 {
+		t.Fatalf("verify exit = %d, stderr=%q", exitCode, errOut.String())
+	}
+	if !strings.Contains(out.String(), "Structural checks passed") {
+		t.Fatalf("unexpected stdout: %q", out.String())
+	}
+}
+
+func TestApp_VerifyCommandMissingArgs(t *testing.T) {
+	var errOut bytes.Buffer
+	app := &App{
+		Name:    "dilivet",
+		Version: "dev",
+		Err:     &errOut,
+	}
+
+	exitCode := app.Run([]string{"verify"})
+
+	if exitCode == 0 {
+		t.Fatal("expected non-zero exit when required flags missing")
+	}
+	if !strings.Contains(errOut.String(), "-pub, -sig, and -msg are required") {
+		t.Fatalf("unexpected stderr: %q", errOut.String())
 	}
 }
