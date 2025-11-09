@@ -1,3 +1,8 @@
+// © 2025 Thor Thor
+// Contact: codethor@gmail.com
+// LinkedIn: https://www.linkedin.com/in/thor-thor0
+// SPDX-License-Identifier: MIT
+
 // Package cli provides shared CLI application logic for dilivet and mldsa-vet.
 //
 // This package eliminates code duplication between the two CLI entrypoints

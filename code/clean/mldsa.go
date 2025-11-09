@@ -1,3 +1,8 @@
+// © 2025 Thor Thor
+// Contact: codethor@gmail.com
+// LinkedIn: https://www.linkedin.com/in/thor-thor0
+// SPDX-License-Identifier: MIT
+
 // Package mldsa implements ML-DSA (FIPS 204) digital signatures.
 //
 // ML-DSA is a post-quantum signature scheme based on the hardness
