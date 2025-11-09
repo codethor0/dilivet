@@ -5,7 +5,12 @@
 
 package poly
 
-import "errors"
+import (
+	"encoding/binary"
+	"errors"
+
+	"golang.org/x/crypto/sha3"
+)
 
 const (
 	d        = 13
@@ -47,6 +52,15 @@ func Le2QModQ(x uint32) uint32 {
 	return x + (mask & Q)
 }
 
+// Canonical returns the representative of x in signed canonical form (-q/2, q/2].
+func Canonical(x uint32) int32 {
+	y := int32(ModQ(x))
+	if y > int32(Q)/2 {
+		y -= int32(Q)
+	}
+	return y
+}
+
 // ModQ returns x mod q for any uint32.
 func ModQ(x uint32) uint32 {
 	return Le2QModQ(ReduceLe2Q(x))
@@ -56,6 +70,37 @@ func ModQ(x uint32) uint32 {
 func montReduceLe2Q(a uint64) uint32 {
 	m := (a * uint64(qInv)) & 0xffffffff
 	return uint32((a + m*uint64(Q)) >> 32)
+}
+
+// ToMont converts a canonical representative into Montgomery form.
+func ToMont(x uint32) uint32 {
+	return uint32((uint64(x) << 32) % Q)
+}
+
+// FromMont converts a Montgomery-form value back to the canonical representative.
+func FromMont(x uint32) uint32 {
+	return montReduceLe2Q(uint64(x))
+}
+
+// Add sets p = a + b (mod q).
+func (p *Poly) Add(a, b *Poly) {
+	for i := range p.Coeffs {
+		p.Coeffs[i] = ReduceLe2Q(a.Coeffs[i] + b.Coeffs[i])
+	}
+}
+
+// Sub sets p = a - b (mod q).
+func (p *Poly) Sub(a, b *Poly) {
+	for i := range p.Coeffs {
+		p.Coeffs[i] = ReduceLe2Q(a.Coeffs[i] + 2*Q - b.Coeffs[i])
+	}
+}
+
+// PointwiseMontgomery sets p = a * b (coefficient-wise) assuming Montgomery domain inputs.
+func (p *Poly) PointwiseMontgomery(a, b *Poly) {
+	for i := range p.Coeffs {
+		p.Coeffs[i] = montReduceLe2Q(uint64(a.Coeffs[i]) * uint64(b.Coeffs[i]))
+	}
 }
 
 // Freeze normalizes all coefficients of p into [0, q).
@@ -99,6 +144,122 @@ func invNTT(p *Poly) {
 	for i := range p.Coeffs {
 		p.Coeffs[i] = montReduceLe2Q(uint64(p.Coeffs[i]) * rOver256)
 	}
+}
+
+// PointwiseAccMontgomery computes sum_{i}(a_i * b_i) and stores in out.
+func PointwiseAccMontgomery(out *Poly, a, b []*Poly) {
+	if len(a) != len(b) {
+		panic("poly: mismatched polyvec lengths")
+	}
+	for i := range out.Coeffs {
+		out.Coeffs[i] = 0
+	}
+	var temp Poly
+	for i := range a {
+		temp.PointwiseMontgomery(a[i], b[i])
+		out.Add(out, &temp)
+	}
+}
+
+// SamplePolyEta fills p with coefficients sampled from the centered binomial distribution with parameter eta.
+func SamplePolyEta(p *Poly, seed []byte, nonce uint16, eta int) error {
+	if p == nil {
+		return errors.New("poly: nil polynomial")
+	}
+	bufLen := (eta * N) / 4
+	if bufLen <= 0 {
+		return errors.New("poly: invalid eta")
+	}
+	buf := make([]byte, bufLen)
+	xof := sha3.NewShake256()
+	if _, err := xof.Write(seed); err != nil {
+		return err
+	}
+	if _, err := xof.Write([]byte{byte(nonce), byte(nonce >> 8)}); err != nil {
+		return err
+	}
+	if _, err := xof.Read(buf); err != nil {
+		return err
+	}
+	return sampleCBD(p, buf, eta)
+}
+
+// SamplePolyUniform samples coefficients uniformly at random modulo q using SHAKE256(seed || nonce).
+func SamplePolyUniform(p *Poly, seed []byte, nonce uint16) error {
+	if p == nil {
+		return errors.New("poly: nil polynomial")
+	}
+	xof := sha3.NewShake256()
+	if _, err := xof.Write(seed); err != nil {
+		return err
+	}
+	if _, err := xof.Write([]byte{byte(nonce), byte(nonce >> 8)}); err != nil {
+		return err
+	}
+	var buf [3]byte
+	ctr := 0
+	for ctr < N {
+		if _, err := xof.Read(buf[:]); err != nil {
+			return err
+		}
+		val := uint32(buf[0]) | (uint32(buf[1]) << 8) | (uint32(buf[2]) << 16)
+		val &= 0x7FFFFF // 23 bits
+		if val < Q {
+			p.Coeffs[ctr] = val
+			ctr++
+		}
+	}
+	return nil
+}
+
+func sampleCBD(p *Poly, buf []byte, eta int) error {
+	switch eta {
+	case 2:
+		if len(buf) < N/2 {
+			return errors.New("poly: buffer too short for cbd eta=2")
+		}
+		for i := 0; i < N/8; i++ {
+			t := binary.LittleEndian.Uint32(buf[4*i:])
+			d := t & 0x55555555
+			d += (t >> 1) & 0x55555555
+			for j := 0; j < 8; j++ {
+				a := (d >> (4 * j)) & 0x3
+				b := (d >> (4*j + 2)) & 0x3
+				val := int32(a) - int32(b)
+				if val < 0 {
+					val += int32(Q)
+				}
+				p.Coeffs[8*i+j] = uint32(val)
+			}
+		}
+	case 4:
+		if len(buf) < N {
+			return errors.New("poly: buffer too short for cbd eta=4")
+		}
+		for i := 0; i < N/8; i++ {
+			t0 := binary.LittleEndian.Uint64(buf[8*i:])
+			t1 := t0 >> 1
+			t0 &= 0x5555555555555555
+			t1 &= 0x5555555555555555
+			t0 += t1
+			t1 = t0 >> 2
+			t0 &= 0x3333333333333333
+			t1 &= 0x3333333333333333
+			t0 += t1
+			for j := 0; j < 8; j++ {
+				a := (t0 >> (8 * j)) & 0xF
+				b := (t0 >> (8*j + 4)) & 0xF
+				val := int32(a) - int32(b)
+				if val < 0 {
+					val += int32(Q)
+				}
+				p.Coeffs[8*i+j] = uint32(val)
+			}
+		}
+	default:
+		return errors.New("poly: unsupported eta")
+	}
+	return nil
 }
 
 // NTT computes the number-theoretic transform of p in place.
