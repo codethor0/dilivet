@@ -72,6 +72,8 @@ func (a *App) Run(args []string) int {
 		switch cmd {
 		case "verify":
 			return a.runVerify(args)
+		case "kat-verify":
+			return a.runKATVerify(args)
 		default:
 			fmt.Fprintf(a.Err, "unknown command %q\n", cmd)
 			return 1
@@ -97,6 +99,7 @@ USAGE:
 
 COMMANDS:
     verify      Validate an ML-DSA signature against a public key
+    kat-verify  Dry-run ACVP sigVer KAT vectors through structural checks
 
 OPTIONS:
     -version    Print version and exit
@@ -109,11 +112,14 @@ EXAMPLES:
     %s verify -pub pk.hex -sig sig.hex -msg msg.bin
         Verify a signature using hex-encoded key/signature files
 
+    %s kat-verify
+        Run structural checks across the bundled ACVP sigVer vectors
+
 DOCUMENTATION:
     GitHub: https://github.com/codethor0/dilivet
     Issues: https://github.com/codethor0/dilivet/issues
 
 LICENSE:
     MIT License - see LICENSE file for details
-`, a.Name, a.Version, a.Name, a.Name, a.Name)
+`, a.Name, a.Version, a.Name, a.Name, a.Name, a.Name)
 }

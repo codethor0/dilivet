@@ -34,6 +34,12 @@ Verify a signature (public key and signature files hex-encoded by default):
 dilivet verify -pub path/to/pk.hex -sig path/to/sig.hex -msg path/to/message.bin
 ```
 
+Run structural checks against the bundled ACVP sigVer vectors:
+
+```bash
+dilivet kat-verify
+```
+
 Verify downloaded release artifacts (when using release zips):
 
 ```bash
@@ -75,4 +81,4 @@ The repository ships with the official FIPS 204 specification (`code/clean/tes
 go test ./code/clean/kats
 ```
 
-If NIST republishes updated vectors, drop the new JSON files in the same directory and extend the loader tests as needed.
+If NIST republishes updated vectors, drop the new JSON files in the same directory and extend the loader tests as needed. The CLI command `dilivet kat-verify` provides a quick structural smoke test across the default vector bundle.

@@ -8,6 +8,7 @@ package cli
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -195,5 +196,71 @@ func TestApp_VerifyCommandMissingArgs(t *testing.T) {
 	}
 	if !strings.Contains(errOut.String(), "-pub, -sig, and -msg are required") {
 		t.Fatalf("unexpected stderr: %q", errOut.String())
+	}
+}
+
+func TestApp_KATVerifyCommand(t *testing.T) {
+	tDir := t.TempDir()
+
+	pk := strings.Repeat("AA", 1312)
+	sig := strings.Repeat("BB", 2420)
+	msg := "00"
+
+	payload := map[string]interface{}{
+		"algorithm": "ML-DSA",
+		"mode":      "sigVer",
+		"revision":  "FIPS204",
+		"isSample":  false,
+		"testGroups": []map[string]interface{}{
+			{
+				"tgId":               1,
+				"testType":           "AFT",
+				"parameterSet":       "ML-DSA-44",
+				"signatureInterface": "external",
+				"preHash":            "pure",
+				"externalMu":         false,
+				"tests": []map[string]interface{}{
+					{
+						"tcId":       1,
+						"testPassed": true,
+						"deferred":   false,
+						"pk":         pk,
+						"sk":         "",
+						"message":    msg,
+						"context":    "",
+						"hashAlg":    "none",
+						"signature":  sig,
+						"reason":     "",
+					},
+				},
+			},
+		},
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal vectors: %v", err)
+	}
+
+	vectorPath := filepath.Join(tDir, "vectors.json")
+	if err := os.WriteFile(vectorPath, data, 0o600); err != nil {
+		t.Fatalf("write vectors: %v", err)
+	}
+
+	var out, errOut bytes.Buffer
+	app := &App{
+		Name:    "dilivet",
+		Version: "dev",
+		Out:     &out,
+		Err:     &errOut,
+	}
+
+	exitCode := app.Run([]string{"kat-verify", "-vectors", vectorPath})
+	if exitCode != 0 {
+		t.Fatalf("kat-verify exit = %d, stderr=%q", exitCode, errOut.String())
+	}
+
+	if !strings.Contains(out.String(), "Total tests: 1") {
+		t.Fatalf("unexpected stdout: %q", out.String())
 	}
 }
