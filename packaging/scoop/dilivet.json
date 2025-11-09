@@ -1,0 +1,19 @@
+{
+  "version": "0.1.11",
+  "description": "Diagnostics and vetting toolkit for ML-DSA (Dilithium-like) signatures",
+  "homepage": "https://github.com/codethor0/dilivet",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/codethor0/dilivet/releases/download/v0.1.11/dilivet_windows_amd64.zip",
+      "hash": "TODO_REPLACE_WITH_ACTUAL_SHA256"
+    },
+    "arm64": {
+      "url": "https://github.com/codethor0/dilivet/releases/download/v0.1.11/dilivet_windows_arm64.zip",
+      "hash": "TODO_REPLACE_WITH_ACTUAL_SHA256"
+    }
+  },
+  "bin": "dilivet.exe",
+  "notes": "Replace the placeholder SHA256 values above when publishing an official release."
+}
+

@@ -49,6 +49,43 @@ Verify downloaded release artifacts (when using release zips):
 # grep -E "(dilivet|mldsa-vet)-${GOOS}-${GOARCH}\.zip" SHA256SUMS.txt | shasum -a 256 -c
 ```
 
+## Quickstart (3 commands)
+
+```bash
+go install github.com/codethor0/dilivet/cmd/dilivet@latest
+dilivet -version
+printf 'msg=616263\npk=00\nsk=ff\nend\n' > sample.req && dilivet kat -req sample.req -mode verify
+```
+
+## Verify releases (cosign + SLSA)
+
+```bash
+# Verify the checksum bundle (requires cosign v2.0+)
+COSIGN_EXPERIMENTAL=1 cosign verify-blob \
+  --bundle dist/SHA256SUMS.txt.bundle \
+  --certificate-identity-regexp 'https://github.com/codethor0/dilivet' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  dist/SHA256SUMS.txt
+
+# Verify provenance (requires slsa-verifier)
+slsa-verifier verify-artifact \
+  --provenance dist/provenance.intoto.jsonl \
+  --source-uri github.com/codethor0/dilivet \
+  dist/dilivet_<os>_<arch>.tar.gz
+```
+
+## Interop: external implementations
+
+```bash
+# Run an external signer (Rust) and verifier (Python) against a message/key pair
+dilivet exec \
+  --sign ./target/release/my-mldsa-signer \
+  --verify ./venv/bin/my-mldsa-verifier \
+  --msg 626f726e73757072656d616379 \
+  --pk deadbeefcafebabe \
+  --sk 0badf00dbadc0ffe
+```
+
 ## Where to look
 
 - `cmd/` — CLI entrypoints (`dilivet`, `mldsa-vet`)

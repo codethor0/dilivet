@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build:
+    name: build ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+
+    env:
+      CGO_ENABLED: '0'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+
+      - name: Build dilivet
+        run: |
+          BIN_DIR="dist/${{ matrix.goos }}-${{ matrix.goarch }}"
+          mkdir -p "${BIN_DIR}"
+          OUTPUT="${BIN_DIR}/dilivet"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            OUTPUT="${OUTPUT}.exe"
+          fi
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
+            -trimpath -buildvcs=false \
+            -ldflags="-s -w" \
+            -o "${OUTPUT}" ./cmd/dilivet
+
+      - name: Package archive
+        run: |
+          mkdir -p artifacts
+          ARCHIVE="dilivet_${{ matrix.goos }}_${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            zip -j "artifacts/${ARCHIVE}.zip" "dist/${{ matrix.goos }}-${{ matrix.goarch }}/dilivet.exe"
+          else
+            tar -C "dist/${{ matrix.goos }}-${{ matrix.goarch }}" -czf "artifacts/${ARCHIVE}.tar.gz" dilivet
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/${{ matrix.goos }}-${{ matrix.goarch }}/dilivet*
+            artifacts/*
+
+  checksums:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          find . -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec sha256sum {} \; | sort -k 2 > SHA256SUMS.txt
+
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: dist
+          format: spdx-json
+          output-file: dist/sbom.spdx.json
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Cosign SHA256SUMS.txt (keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cd dist
+          cosign sign-blob --yes --bundle SHA256SUMS.txt.bundle SHA256SUMS.txt
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle
+          path: dist/**
+
+  publish:
+    needs: checksums
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: release-bundle
+          path: dist
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/**/*.tar.gz
+            dist/**/*.zip
+            dist/SHA256SUMS.txt
+            dist/SHA256SUMS.txt.bundle
+            dist/sbom.spdx.json
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1
+    with:
+      release-name: ${{ github.ref_name }}
+
