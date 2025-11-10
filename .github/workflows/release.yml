@@ -10,7 +10,14 @@ permissions:
   contents: write
 
 jobs:
+  noop:
+    if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "workflow_dispatch without tag ref; nothing to release."
+
   build:
+    if: startsWith(github.ref, 'refs/tags/')
     name: build ${{ matrix.goos }}-${{ matrix.goarch }}
     runs-on: ubuntu-latest
     strategy:
@@ -56,6 +63,7 @@ jobs:
             dist/${{ matrix.goos }}-${{ matrix.goarch }}.zip
 
   checksums:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -75,6 +83,7 @@ jobs:
           path: dist/SHA256SUMS.txt
 
   release:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: checksums
     runs-on: ubuntu-latest
     steps:
