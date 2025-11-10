@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/codethor0/dilivet/code/kat"
+	"github.com/codethor0/dilivet/code/signer"
 )
 
 func TestLoadAndVerify(t *testing.T) {
@@ -19,8 +20,10 @@ func TestLoadAndVerify(t *testing.T) {
 	reqPath := filepath.Join(dir, "sample.req")
 
 	msg := []byte("hello world")
-	pk := []byte{0x01, 0x02, 0x03}
-	sk := []byte{0x09, 0x08, 0x07}
+	pk, sk, err := signer.GenKeyDet([]byte("unit-test-seed"))
+	if err != nil {
+		t.Fatalf("GenKeyDet: %v", err)
+	}
 
 	content := "" +
 		"# synthetic test vector\n" +
@@ -42,20 +45,15 @@ func TestLoadAndVerify(t *testing.T) {
 	}
 
 	dummySign := func(pk, sk, msg []byte) ([]byte, error) {
-		return kat.HashDeterministic(pk, msg), nil
+		return signer.SignDet(sk, msg, nil)
 	}
 	dummyVerify := func(pk, msg, sig []byte) error {
-		expected := kat.HashDeterministic(pk, msg)
-		if len(sig) == 0 {
-			return nil
+		ok, err := signer.Verify(pk, msg, sig)
+		if err != nil {
+			return err
 		}
-		if len(expected) != len(sig) {
-			return &verificationError{reason: "length mismatch"}
-		}
-		for i := range sig {
-			if expected[i] != sig[i] {
-				return &verificationError{reason: "signature mismatch"}
-			}
+		if !ok {
+			return &verificationError{reason: "signature mismatch"}
 		}
 		return nil
 	}
@@ -70,4 +68,3 @@ type verificationError struct {
 }
 
 func (e *verificationError) Error() string { return e.reason }
-

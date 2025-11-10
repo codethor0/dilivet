@@ -19,6 +19,9 @@ package mldsa
 import (
 	"crypto/subtle"
 	"errors"
+	"fmt"
+
+	"github.com/codethor0/dilivet/code/signer"
 )
 
 var validParamSets = map[int][]int{
@@ -55,6 +58,27 @@ var (
 // but does not implement the full FIPS 204 verification algorithm. Use only
 // for testing infrastructure. DO NOT use in production.
 func Verify(pk, msg, sig []byte) (bool, error) {
+	// Deterministic stub compatibility path.
+	if len(pk) == signer.PublicKeySize && len(sig) == signer.SignatureSize {
+		ok, err := signer.Verify(pk, msg, sig)
+		if err != nil {
+			switch {
+			case errors.Is(err, signer.ErrInvalidPublicKey):
+				return false, ErrInvalidPublicKey
+			case errors.Is(err, signer.ErrInvalidSignature):
+				return false, ErrInvalidSignature
+			case errors.Is(err, signer.ErrEmptyMessage):
+				return false, ErrEmptyMessage
+			default:
+				return false, fmt.Errorf("mldsa: signer verify: %w", err)
+			}
+		}
+		if !ok {
+			return false, ErrInvalidSignature
+		}
+		return true, nil
+	}
+
 	// Phase 1: Input validation
 	if len(pk) == 0 {
 		return false, ErrInvalidPublicKey

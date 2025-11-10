@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/codethor0/dilivet/code/kat"
+	"github.com/codethor0/dilivet/code/signer"
 )
 
 func FuzzVerify(f *testing.F) {
@@ -17,27 +18,40 @@ func FuzzVerify(f *testing.F) {
 	}
 
 	sign := func(pk, sk, msg []byte) ([]byte, error) {
-		return kat.HashDeterministic(pk, msg), nil
+		derived, err := signer.DerivePublicKey(sk)
+		if err != nil {
+			return nil, err
+		}
+		if len(pk) != 0 && !equal(pk, derived) {
+			return nil, signer.ErrInvalidPublicKey
+		}
+		return signer.SignDet(sk, msg, nil)
 	}
 	verify := func(pk, msg, sig []byte) error {
-		expected := kat.HashDeterministic(pk, msg)
-		if len(sig) < len(expected) {
-			return &fuzzError{reason: "short signature"}
+		ok, err := signer.Verify(pk, msg, sig)
+		if err != nil {
+			return err
 		}
-		for i := range expected {
-			if expected[i] != sig[i] {
-				return &fuzzError{reason: "signature mismatch"}
-			}
+		if !ok {
+			return signer.ErrInvalidSignature
 		}
 		return nil
 	}
 
 	f.Fuzz(func(t *testing.T, payload []byte) {
+		sk := hashOrPad(payload)
+		if len(sk) != signer.SecretKeySize {
+			return
+		}
+		pk, err := signer.DerivePublicKey(sk)
+		if err != nil {
+			return
+		}
 		cases := []kat.Case{
 			{
 				Message:   append([]byte(nil), payload...),
-				PublicKey: append([]byte(nil), payload...),
-				SecretKey: kat.HashDeterministic(payload, []byte("sk")),
+				PublicKey: pk,
+				SecretKey: sk,
 			},
 		}
 		_ = kat.Verify(cases, sign, verify)
@@ -50,3 +64,23 @@ type fuzzError struct {
 
 func (e *fuzzError) Error() string { return e.reason }
 
+func hashOrPad(input []byte) []byte {
+	if len(input) >= signer.SecretKeySize {
+		return append([]byte(nil), input[:signer.SecretKeySize]...)
+	}
+	padded := make([]byte, signer.SecretKeySize)
+	copy(padded, input)
+	return padded
+}
+
+func equal(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
