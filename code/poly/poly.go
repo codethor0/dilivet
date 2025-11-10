@@ -36,8 +36,6 @@ type Poly struct {
 	Coeffs [N]uint32
 }
 
-var errNotImplemented = errors.New("poly: not implemented")
-
 // ReduceLe2Q reduces x into [0, 2q).
 func ReduceLe2Q(x uint32) uint32 {
 	x1 := x >> 23

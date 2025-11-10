@@ -58,12 +58,6 @@ func FuzzVerify(f *testing.F) {
 	})
 }
 
-type fuzzError struct {
-	reason string
-}
-
-func (e *fuzzError) Error() string { return e.reason }
-
 func hashOrPad(input []byte) []byte {
 	if len(input) >= signer.SecretKeySize {
 		return append([]byte(nil), input[:signer.SecretKeySize]...)
