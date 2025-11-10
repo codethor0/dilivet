@@ -3,13 +3,15 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/codethor0/dilivet)](https://goreportcard.com/report/github.com/codethor0/dilivet)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/codethor0/dilivet)](https://pkg.go.dev/github.com/codethor0/dilivet)
-[![Go Test](https://github.com/codethor0/dilivet/actions/workflows/go-test.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/go-test.yml)
-[![Lint](https://github.com/codethor0/dilivet/actions/workflows/lint.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/lint.yml)
-[![Release](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml)
+[![Go Test](https://github.com/codethor0/dilivet/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/ci.yml)
+[![Fuzz](https://github.com/codethor0/dilivet/actions/workflows/fuzz.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/fuzz.yml)
+[![Release](https://github.com/codethor0/dilivet/actions/workflows/release.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/dilivet/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/dilivet)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-A small toolkit for ML-DSA (Dilithium-like) signature diagnostics and vetting. DiliVet provides test harnesses, known-answer vectors, and simple CLI tools to validate implementations and help developers catch common implementation errors.
+## About
+
+DiliVet is a diagnostics and vetting toolkit for ML-DSA (Dilithium-like) signature implementations. It focuses on reproducible known-answer testing, adversarial edge vectors, and deterministic sampling so implementers can catch integration bugs before shipping. The CLI also exposes interoperability helpers for exercising third-party signers and verifiers, plus reproducible release artifacts with cosign and SLSA provenance to keep the supply chain transparent.
 
 ## Quick start
 
