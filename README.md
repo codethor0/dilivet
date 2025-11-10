@@ -8,6 +8,8 @@ dilivet -version
 [![Lint](https://github.com/codethor0/dilivet/actions/workflows/lint.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/lint.yml)
 [![Release](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml/badge.svg)](https://github.com/codethor0/dilivet/actions/workflows/release-dilivet.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Tip](https://img.shields.io/badge/Tip-❤-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01)
+[![Monthly](https://img.shields.io/badge/Monthly-♻️-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
 
 A small toolkit for ML-DSA (Dilithium-like) signature diagnostics and vetting. DiliVet provides test harnesses, known-answer vectors, and simple CLI tools to validate implementations and help developers catch common implementation errors.
 
@@ -50,3 +52,6 @@ See `CONTRIBUTING.md` for the developer quick loop, testing, and release notes.
 ## License
 
 This project is licensed under the MIT License — see `LICENSE`.
+
+[![Tip](https://img.shields.io/badge/Tip-❤-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01)
+[![Monthly](https://img.shields.io/badge/Monthly-♻️-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
