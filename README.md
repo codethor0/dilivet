@@ -93,6 +93,7 @@ dilivet exec \
 - `code/` — core packages and tests (official ML-DSA KAT loaders live in `code/clean/kats`)
 - `code/clean/testdata/kats/ml-dsa/` — bundled FIPS 204 ACVP vectors for offline testing
 - `.github/workflows` — CI (tests, lint, release)
+- `docs/branch-protection.md` — recommended status checks for protected branches
 - `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — project metadata
 
 ## Support
