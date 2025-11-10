@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+assets/
+docs/
+fuzz/
+code/clean/testdata/
+packaging/
+scripts/
+dist/*
+!dist/linux-amd64/dilivet
+
