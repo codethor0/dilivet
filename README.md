@@ -2,6 +2,10 @@
 
 ![DiliVet Banner](assets/branding/dilivet-banner.png)
 
+<p align="center">
+  <img src="assets/branding/dilivet-logo.png" alt="DiliVet Logo" width="220">
+</p>
+
 # DiliVet
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/codethor0/dilivet)](https://goreportcard.com/report/github.com/codethor0/dilivet)
