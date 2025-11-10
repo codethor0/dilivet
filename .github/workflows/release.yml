@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build:
+    if: startsWith(github.ref, 'refs/tags/')
     name: build ${{ matrix.goos }}-${{ matrix.goarch }}
     runs-on: ubuntu-latest
     strategy:
@@ -63,6 +64,7 @@ jobs:
             artifacts/*
 
   checksums:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -100,6 +102,7 @@ jobs:
           path: dist/**
 
   publish:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: checksums
     runs-on: ubuntu-latest
     steps:
@@ -120,6 +123,7 @@ jobs:
             dist/sbom.spdx.json
 
   provenance:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     permissions:
       actions: read
