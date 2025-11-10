@@ -21,6 +21,9 @@ var (
 	ErrInvalidLength = errors.New("pack: input too short for requested unpack length")
 )
 
+// ErrInvalidHint indicates an invalid hint encoding.
+var ErrInvalidHint = errors.New("pack: invalid hint encoding")
+
 // mask returns a uint64 mask with the lowest bits bits set.
 func mask(bits int) uint64 {
 	if bits == 64 {
@@ -132,4 +135,88 @@ func UnpackPolyCoeffs(data []byte, bits int) (*poly.Poly, error) {
 		p.Coeffs[i] = vals[i]
 	}
 	return &p, nil
+}
+
+// UnpackPolyLeGamma1 decodes a polynomial from the two's-complement centered representation
+// used for z coefficients in ML-DSA. Each coefficient is stored as a signed
+// little-endian integer with b bits (typically 18 or 20 depending on parameter set).
+func UnpackPolyLeGamma1(data []byte, bits int) (*poly.Poly, error) {
+	if bits <= 0 || bits > 24 {
+		return nil, ErrInvalidBits
+	}
+	totalBits := bits * poly.N
+	expectedLen := (totalBits + 7) / 8
+	if len(data) < expectedLen {
+		return nil, ErrInvalidLength
+	}
+
+	var p poly.Poly
+	bitMask := uint32(1<<bits) - 1
+	byteIdx := 0
+	bitIdx := 0
+	for i := 0; i < poly.N; i++ {
+		var coeff uint32
+		remaining := bits
+		shift := 0
+		for remaining > 0 {
+			if byteIdx >= len(data) {
+				return nil, ErrInvalidLength
+			}
+			available := 8 - bitIdx
+			take := remaining
+			if take > available {
+				take = available
+			}
+			chunk := (uint32(data[byteIdx]) >> bitIdx) & ((1 << take) - 1)
+			coeff |= chunk << shift
+			remaining -= take
+			shift += take
+			bitIdx += take
+			if bitIdx == 8 {
+				bitIdx = 0
+				byteIdx++
+			}
+		}
+		coeff &= bitMask
+		// Convert from two's complement centered form into canonical representative.
+		signBit := uint32(1) << (bits - 1)
+		if coeff&signBit != 0 {
+			coeff = coeff - (1 << bits)
+		}
+		if coeff >= poly.Q {
+			coeff = coeff % poly.Q
+		} else {
+			coeff = (coeff + poly.Q) % poly.Q
+		}
+		p.Coeffs[i] = coeff
+	}
+	return &p, nil
+}
+
+// UnpackHint decodes the hint vector h from the compressed representation used in ML-DSA.
+// The encoding consists of omega indices followed by padding with 0xFF.
+func UnpackHint(data []byte, omega int) ([]uint8, error) {
+	if omega < 0 || omega > poly.N {
+		return nil, ErrInvalidHint
+	}
+	h := make([]uint8, 0, omega)
+	for i, b := range data {
+		if b == 0xFF {
+			// padding byte, all subsequent bytes must also be 0xFF
+			for _, rem := range data[i:] {
+				if rem != 0xFF {
+					return nil, ErrInvalidHint
+				}
+			}
+			break
+		}
+		if int(b) >= poly.N {
+			return nil, ErrInvalidHint
+		}
+		h = append(h, b)
+		if len(h) > omega {
+			return nil, ErrInvalidHint
+		}
+	}
+	return h, nil
 }

@@ -18,18 +18,25 @@ import "errors"
 // These parameters define the dimensions, bounds, and sizes for keys and
 // signatures according to FIPS 204.
 type Params struct {
-	Name     string // Parameter set name (e.g., "ML-DSA-44")
-	K        int    // Dimension k (height of matrix A and vector t)
-	L        int    // Dimension l (width of matrix A and vector s)
-	Eta      int    // Secret key coefficient range [-η, η]
-	Beta     int    // Rejection bound β for signatures
-	Gamma1   int    // Signature norm bound γ₁
-	Gamma2   int    // Hint generation bound γ₂ = (q-1)/(2*ω)
-	Tau      int    // Number of ±1 coefficients in challenge polynomial
-	Omega    int    // Maximum number of ones in hint h
-	PKBytes  int    // Public key size in bytes
-	SKBytes  int    // Private key size in bytes
-	SigBytes int    // Signature size in bytes
+	Name       string // Parameter set name (e.g., "ML-DSA-44")
+	K          int    // Dimension k (height of matrix A and vector t)
+	L          int    // Dimension l (width of matrix A and vector s)
+	Eta        int    // Secret key coefficient range [-η, η]
+	Beta       int    // Rejection bound β for signatures
+	Gamma1     int    // Signature norm bound γ₁
+	Gamma2     int    // Hint generation bound γ₂ = (q-1)/(2*ω)
+	Tau        int    // Number of ±1 coefficients in challenge polynomial
+	Omega      int    // Maximum number of ones in hint h
+	Gamma1Bits int    // Number of bits used to encode gamma1-bound polys
+	Gamma2Bits int    // Number of bits used to encode gamma2-bound polys
+	DuBits     int    // Bit-width for t1 compression
+	DvBits     int    // Bit-width for w1 compression
+	ETA1       int    // eta1 (secret key)
+	ETA2       int    // eta2 (used in the expansion of secret key)
+	TauShort   int    // Tau' for recomputed challenge
+	PKBytes    int    // Public key size in bytes
+	SKBytes    int    // Private key size in bytes
+	SigBytes   int    // Signature size in bytes
 }
 
 // Standard ML-DSA parameter sets as defined in FIPS 204.
@@ -40,18 +47,25 @@ var (
 	// applications where performance is critical and 128-bit security
 	// is sufficient.
 	ParamsMLDSA44 = &Params{
-		Name:     "ML-DSA-44",
-		K:        4,
-		L:        4,
-		Eta:      2,
-		Beta:     78,
-		Gamma1:   1 << 17, // 2^17 = 131072
-		Gamma2:   (q - 1) / 88,
-		Tau:      39,
-		Omega:    80,
-		PKBytes:  1312,
-		SKBytes:  2560,
-		SigBytes: 2420,
+		Name:       "ML-DSA-44",
+		K:          4,
+		L:          4,
+		Eta:        2,
+		Beta:       78,
+		Gamma1:     1 << 17, // 2^17 = 131072
+		Gamma2:     (q - 1) / 88,
+		Tau:        39,
+		Omega:      80,
+		Gamma1Bits: 18,
+		Gamma2Bits: 9,
+		DuBits:     9,
+		DvBits:     5,
+		ETA1:       2,
+		ETA2:       2,
+		TauShort:   39,
+		PKBytes:    1312,
+		SKBytes:    2560,
+		SigBytes:   2420,
 	}
 
 	// ParamsMLDSA65 provides NIST Security Category 3 (192-bit security).
@@ -59,18 +73,25 @@ var (
 	// This is the recommended parameter set for most applications,
 	// providing a good balance between security and performance.
 	ParamsMLDSA65 = &Params{
-		Name:     "ML-DSA-65",
-		K:        6,
-		L:        5,
-		Eta:      4,
-		Beta:     196,
-		Gamma1:   1 << 19, // 2^19 = 524288
-		Gamma2:   (q - 1) / 32,
-		Tau:      49,
-		Omega:    55,
-		PKBytes:  1952,
-		SKBytes:  4032,
-		SigBytes: 3309,
+		Name:       "ML-DSA-65",
+		K:          6,
+		L:          5,
+		Eta:        4,
+		Beta:       196,
+		Gamma1:     1 << 19, // 2^19 = 524288
+		Gamma2:     (q - 1) / 32,
+		Tau:        49,
+		Omega:      55,
+		Gamma1Bits: 19,
+		Gamma2Bits: 10,
+		DuBits:     10,
+		DvBits:     4,
+		ETA1:       4,
+		ETA2:       2,
+		TauShort:   49,
+		PKBytes:    1952,
+		SKBytes:    4032,
+		SigBytes:   3309,
 	}
 
 	// ParamsMLDSA87 provides NIST Security Category 5 (256-bit security).
@@ -78,20 +99,41 @@ var (
 	// This is the largest and most secure parameter set, suitable for
 	// applications requiring the highest level of post-quantum security.
 	ParamsMLDSA87 = &Params{
-		Name:     "ML-DSA-87",
-		K:        8,
-		L:        7,
-		Eta:      2,
-		Beta:     120,
-		Gamma1:   1 << 19, // 2^19 = 524288
-		Gamma2:   (q - 1) / 32,
-		Tau:      60,
-		Omega:    75,
-		PKBytes:  2592,
-		SKBytes:  4896,
-		SigBytes: 4627,
+		Name:       "ML-DSA-87",
+		K:          8,
+		L:          7,
+		Eta:        2,
+		Beta:       120,
+		Gamma1:     1 << 19, // 2^19 = 524288
+		Gamma2:     (q - 1) / 32,
+		Tau:        60,
+		Omega:      75,
+		Gamma1Bits: 19,
+		Gamma2Bits: 10,
+		DuBits:     10,
+		DvBits:     4,
+		ETA1:       2,
+		ETA2:       2,
+		TauShort:   60,
+		PKBytes:    2592,
+		SKBytes:    4896,
+		SigBytes:   4627,
 	}
 )
+
+// FromPublicKeyLength returns the Params for a given public key length.
+func FromPublicKeyLength(pkLen int) (*Params, error) {
+	switch pkLen {
+	case ParamsMLDSA44.PKBytes:
+		return ParamsMLDSA44, nil
+	case ParamsMLDSA65.PKBytes:
+		return ParamsMLDSA65, nil
+	case ParamsMLDSA87.PKBytes:
+		return ParamsMLDSA87, nil
+	default:
+		return nil, ErrInvalidParams
+	}
+}
 
 const (
 	q = 8380417 // ML-DSA modulus (prime)
