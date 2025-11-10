@@ -7,6 +7,7 @@ package cli
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 
 	mldsa "github.com/codethor0/dilivet/code/clean"
 	"github.com/codethor0/dilivet/code/clean/kats"
+	"github.com/codethor0/dilivet/code/diag"
 )
 
 const defaultSigVerVectors = "code/clean/testdata/kats/ml-dsa/ML-DSA-sigVer-FIPS204-internalProjection.json"
@@ -23,6 +25,7 @@ func (a *App) runKATVerify(args []string) int {
 	fs.SetOutput(a.Err)
 
 	vectorsPath := fs.String("vectors", defaultSigVerVectors, "path to ACVP sigVer vector JSON")
+	jsonOut := fs.Bool("json", false, "emit machine-readable JSON summary")
 
 	if err := fs.Parse(args); err != nil {
 		return exitFromFlagError(err)
@@ -43,53 +46,71 @@ func (a *App) runKATVerify(args []string) int {
 		return 1
 	}
 
-	var total, passes, structuralWarnings, structuralFailures, decodeFailures int
+	report := diag.Report{}
 
 	for _, tg := range vectors.TestGroups {
 		for _, tc := range tg.Tests {
-			total++
+			report.TotalTests++
 
 			pk, err := hex.DecodeString(tc.Public)
 			if err != nil {
-				decodeFailures++
+				report.DecodeFailures++
 				continue
 			}
 			sig, err := hex.DecodeString(tc.Signature)
 			if err != nil {
-				decodeFailures++
+				report.DecodeFailures++
 				continue
 			}
 			msg, err := hex.DecodeString(tc.Message)
 			if err != nil {
-				decodeFailures++
+				report.DecodeFailures++
 				continue
 			}
 
 			ok, verr := mldsa.Verify(pk, msg, sig)
 			switch {
 			case verr == nil && ok:
-				passes++
+				report.StrictPasses++
 			default:
 				if errors.Is(verr, mldsa.ErrNotImplemented) {
-					structuralWarnings++
+					report.StructuralWarnings++
 				} else if verr == nil {
-					structuralWarnings++
+					report.StructuralWarnings++
 				} else {
-					structuralFailures++
+					report.StructuralFailures++
 				}
 			}
 		}
 	}
 
-	fmt.Fprintf(a.Out, "Vectors: %s\n", *vectorsPath)
-	fmt.Fprintf(a.Out, "Total tests: %d\n", total)
-	fmt.Fprintf(a.Out, "Strict passes: %d\n", passes)
-	fmt.Fprintf(a.Out, "Structural warnings: %d\n", structuralWarnings)
-	fmt.Fprintf(a.Out, "Structural failures: %d\n", structuralFailures)
-	fmt.Fprintf(a.Out, "Decode failures: %d\n", decodeFailures)
-	fmt.Fprintf(a.Out, "Note: full ML-DSA verification is not yet implemented; results indicate parsing/length checks only.\n")
+	if *jsonOut {
+		payload := struct {
+			Vectors string `json:"vectors"`
+			diag.Report
+			Note string `json:"note,omitempty"`
+		}{
+			Vectors: path,
+			Report:  report,
+			Note:    "Full ML-DSA verification is not yet implemented; counts reflect parsing/length checks only.",
+		}
+		enc := json.NewEncoder(a.Out)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(payload); err != nil {
+			fmt.Fprintf(a.Err, "kat-verify: encode json: %v\n", err)
+			return 1
+		}
+	} else {
+		fmt.Fprintf(a.Out, "Vectors: %s\n", *vectorsPath)
+		fmt.Fprintf(a.Out, "Total tests: %d\n", report.TotalTests)
+		fmt.Fprintf(a.Out, "Strict passes: %d\n", report.StrictPasses)
+		fmt.Fprintf(a.Out, "Structural warnings: %d\n", report.StructuralWarnings)
+		fmt.Fprintf(a.Out, "Structural failures: %d\n", report.StructuralFailures)
+		fmt.Fprintf(a.Out, "Decode failures: %d\n", report.DecodeFailures)
+		fmt.Fprintf(a.Out, "Note: full ML-DSA verification is not yet implemented; results indicate parsing/length checks only.\n")
+	}
 
-	if decodeFailures > 0 || structuralFailures > 0 {
+	if report.DecodeFailures > 0 || report.StructuralFailures > 0 {
 		return 1
 	}
 	return 0
