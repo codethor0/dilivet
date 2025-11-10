@@ -53,13 +53,6 @@ jobs:
           version: latest
           args: --timeout=5m
 
-      - name: go test (race + coverage)
-        run: go test -race -coverprofile=coverage.out ./...
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: coverage.out
-          flags: unit
-          fail_ci_if_error: true
+      - name: go test (race)
+        run: go test -race ./...
 
