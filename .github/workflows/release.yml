@@ -8,11 +8,9 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   build:
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     name: build ${{ matrix.goos }}-${{ matrix.goarch }}
     runs-on: ubuntu-latest
     strategy:
@@ -21,116 +19,78 @@ jobs:
         goos: [linux, darwin, windows]
         goarch: [amd64, arm64]
 
-    env:
-      CGO_ENABLED: '0'
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.23.x'
+          go-version: '1.24.x'
+          cache: true
 
-      - name: Build dilivet
+      - name: Build
         run: |
-          BIN_DIR="dist/${{ matrix.goos }}-${{ matrix.goarch }}"
-          mkdir -p "${BIN_DIR}"
-          OUTPUT="${BIN_DIR}/dilivet"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            OUTPUT="${OUTPUT}.exe"
-          fi
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
-            -trimpath -buildvcs=false \
-            -ldflags="-s -w" \
-            -o "${OUTPUT}" ./cmd/dilivet
+          mkdir -p dist
+          BIN="dilivet"
+          SUF=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then SUF=".exe"; fi
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+            go build -trimpath -ldflags "-s -w" \
+            -o "dist/${BIN}-${{ matrix.goos }}-${{ matrix.goarch }}${SUF}" ./cmd/dilivet
 
-      - name: Package archive
+      - name: Pack
         run: |
-          mkdir -p artifacts
-          ARCHIVE="dilivet_${{ matrix.goos }}_${{ matrix.goarch }}"
+          cd dist
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            zip -j "artifacts/${ARCHIVE}.zip" "dist/${{ matrix.goos }}-${{ matrix.goarch }}/dilivet.exe"
+            zip "${{ matrix.goos }}-${{ matrix.goarch }}.zip" "dilivet-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
           else
-            tar -C "dist/${{ matrix.goos }}-${{ matrix.goarch }}" -czf "artifacts/${ARCHIVE}.tar.gz" dilivet
+            tar -czf "${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz" "dilivet-${{ matrix.goos }}-${{ matrix.goarch }}"
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: build-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
-            dist/${{ matrix.goos }}-${{ matrix.goarch }}/dilivet*
-            artifacts/*
+            dist/dilivet-${{ matrix.goos }}-${{ matrix.goarch }}*
+            dist/${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+            dist/${{ matrix.goos }}-${{ matrix.goarch }}.zip
 
   checksums:
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: dist
 
-      - name: Generate checksums
+      - name: Compute checksums
         run: |
           cd dist
-          find . -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec sha256sum {} \; | sort -k 2 > SHA256SUMS.txt
+          find . -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec sha256sum {} \; > SHA256SUMS.txt
 
-      - name: Generate SBOM (SPDX)
-        uses: anchore/sbom-action@v0
+      - name: Upload checksum artifact
+        uses: actions/upload-artifact@v5
         with:
-          path: dist
-          format: spdx-json
-          output-file: dist/sbom.spdx.json
+          name: checksums
+          path: dist/SHA256SUMS.txt
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Cosign SHA256SUMS.txt (keyless)
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-        run: |
-          cd dist
-          cosign sign-blob --yes --bundle SHA256SUMS.txt.bundle SHA256SUMS.txt
-
-      - name: Upload release bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-bundle
-          path: dist/**
-
-  publish:
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
+  release:
     needs: checksums
     runs-on: ubuntu-latest
     steps:
-      - name: Download bundle
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: release-bundle
           path: dist
+          merge-multiple: true
 
-      - name: Create release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
           files: |
-            dist/**/*.tar.gz
-            dist/**/*.zip
+            dist/*.tar.gz
+            dist/*.zip
             dist/SHA256SUMS.txt
-            dist/SHA256SUMS.txt.bundle
-            dist/sbom.spdx.json
-
-  provenance:
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
-    needs: build
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1
-    with:
-      release-name: ${{ github.ref_name }}
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
