@@ -19,6 +19,9 @@ jobs:
         with:
           go-version: '1.23.x'
 
-      - name: Fuzz (1 minute)
-        run: go test -fuzz=Fuzz -fuzztime=1m ./fuzz
+      - name: Fuzz decode public key
+        run: go test -fuzz=FuzzDecodePublicKey -fuzztime=1m ./fuzz
+
+      - name: Fuzz verify
+        run: go test -fuzz=FuzzVerify -fuzztime=1m ./fuzz
 
