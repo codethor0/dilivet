@@ -1,3 +1,8 @@
+# © 2025 Thor Thor
+# Contact: codethor@gmail.com
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
+# SPDX-License-Identifier: MIT
+
 name: Release
 
 on:
@@ -8,6 +13,13 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
+
+env:
+  DISK_CAP_GB: 10
+  MAX_LOG_MB: 5
+  GO_VERSION: '1.24.x'
 
 jobs:
   noop:
@@ -29,10 +41,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check disk space
+        run: |
+          df -h
+          echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
+
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.24.x'
-          cache: true
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Build
         run: |
@@ -61,6 +87,12 @@ jobs:
             dist/dilivet-${{ matrix.goos }}-${{ matrix.goarch }}*
             dist/${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
             dist/${{ matrix.goos }}-${{ matrix.goarch }}.zip
+          retention-days: 90
+
+      - name: Cleanup
+        if: always()
+        run: |
+          go clean -cache -modcache -testcache 2>/dev/null || true
 
   checksums:
     if: startsWith(github.ref, 'refs/tags/')
@@ -81,10 +113,66 @@ jobs:
         with:
           name: checksums
           path: dist/SHA256SUMS.txt
+          retention-days: 90
+
+  sbom:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: dist
+          format: cyclonedx-json
+          output-file: dist/sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: sbom
+          path: dist/sbom.cyclonedx.json
+          retention-days: 90
+
+  provenance:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build, checksums]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate SLSA provenance
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1
+        with:
+          base64-subjects: ${{ hashFiles('dist/SHA256SUMS.txt') }}
+          upload-assets: true
 
   release:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: checksums
+    needs: [checksums, sbom]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -102,8 +190,35 @@ jobs:
             dist/**/*.tar.gz
             dist/**/*.zip
             dist/**/SHA256SUMS.txt
+            dist/**/sbom.cyclonedx.json
           fail_on_unmatched_files: false
           overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign release artifacts with cosign
+        uses: sigstore/cosign-installer@v4
+        continue-on-error: true
+
+      - name: Sign checksums
+        if: success()
+        continue-on-error: true
+        run: |
+          cosign sign-blob --yes dist/SHA256SUMS.txt \
+            --bundle dist/SHA256SUMS.txt.bundle \
+            --output-certificate dist/SHA256SUMS.txt.pem \
+            --output-signature dist/SHA256SUMS.txt.sig || echo "Cosign signing failed (may need COSIGN_EXPERIMENTAL=1 or key setup)"
+
+      - name: Upload signed artifacts
+        if: success()
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/**/*.bundle
+            dist/**/*.sig
+            dist/**/*.pem
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -111,3 +226,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit ${{ github.ref_name }} --draft=false --latest --repo "${{ github.repository }}"
+
+      - name: Cleanup and report
+        if: always()
+        run: |
+          echo "=== Disk usage ==="
+          df -h | tail -1 | awk '{print "Total: " $2 ", Used: " $3 ", Available: " $4}'

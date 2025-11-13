@@ -1,0 +1,68 @@
+# © 2025 Thor Thor
+# Contact: codethor@gmail.com
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
+# SPDX-License-Identifier: MIT
+
+name: Maintenance
+
+on:
+  schedule:
+    - cron: '0 2 * * 0' # Every Sunday at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Cleanup artifacts and caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List artifacts
+        run: |
+          echo "=== Current artifacts ==="
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | "\(.name) - \(.size_in_bytes) bytes - \(.created_at)"' || echo "No artifacts found or API access issue"
+
+      - name: List caches
+        run: |
+          echo "=== Current caches ==="
+          gh api repos/${{ github.repository }}/actions/caches --jq '.actions_caches[] | "\(.key) - \(.size_in_bytes) bytes - \(.created_at)"' || echo "No caches found or API access issue"
+
+      - name: Delete old artifacts (older than 90 days)
+        continue-on-error: true
+        run: |
+          echo "=== Deleting artifacts older than 90 days ==="
+          ARTIFACTS=$(gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select((.created_at | fromdateiso8601) < (now - 7776000)) | .id')
+          if [ -z "$ARTIFACTS" ]; then
+            echo "No artifacts to delete"
+          else
+            echo "$ARTIFACTS" | while read -r id; do
+              echo "Deleting artifact $id"
+              gh api repos/${{ github.repository }}/actions/artifacts/$id -X DELETE || true
+            done
+          fi
+
+      - name: Delete old caches (older than 7 days, not in use)
+        continue-on-error: true
+        run: |
+          echo "=== Deleting caches older than 7 days ==="
+          CACHES=$(gh api repos/${{ github.repository }}/actions/caches --jq '.actions_caches[] | select((.created_at | fromdateiso8601) < (now - 604800)) | .id')
+          if [ -z "$CACHES" ]; then
+            echo "No caches to delete"
+          else
+            echo "$CACHES" | while read -r id; do
+              echo "Deleting cache $id"
+              gh api repos/${{ github.repository }}/actions/caches/$id -X DELETE || true
+            done
+          fi
+
+      - name: Summary
+        run: |
+          echo "=== Cleanup Summary ==="
+          echo "Maintenance run completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Check GitHub Actions UI for detailed artifact and cache usage"
+

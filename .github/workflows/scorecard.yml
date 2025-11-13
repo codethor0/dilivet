@@ -12,6 +12,10 @@ on:
 
 permissions: read-all
 
+env:
+  DISK_CAP_GB: 10
+  MAX_LOG_MB: 5
+
 jobs:
   analysis:
     name: Scorecard Analysis
@@ -23,6 +27,11 @@ jobs:
       actions: read
 
     steps:
+      - name: Check disk space
+        run: |
+          df -h
+          echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -42,3 +51,8 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
+
+      - name: Cleanup
+        if: always()
+        run: |
+          df -h | tail -1 | awk '{print "Total: " $2 ", Used: " $3 ", Available: " $4}'

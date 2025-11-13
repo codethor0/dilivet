@@ -94,12 +94,49 @@ dilivet exec \
   --sk 0badf00dbadc0ffe
 ```
 
+## Run CI locally
+
+Reproduce CI checks locally to catch issues before pushing:
+
+```bash
+# Install Go 1.24.x (or use asdf/nvm-style version manager)
+go version  # Should show go1.24.x
+
+# Fast preflight (lint + types) - runs on PRs
+go vet ./...
+golangci-lint run --timeout=5m
+
+# Full test suite (matches CI matrix)
+go test -race -p 4 ./...
+
+# Fuzz tests (optional, matches CI)
+go test -fuzz=FuzzDecodePublicKey -fuzztime=1m ./fuzz
+go test -fuzz=FuzzVerify -fuzztime=1m ./fuzz
+
+# Cross-compile build test (matches release workflow)
+for os in linux darwin windows; do
+  for arch in amd64 arm64; do
+    CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
+      go build -trimpath -ldflags "-s -w" \
+      -o "dist/dilivet-$os-$arch" ./cmd/dilivet
+  done
+done
+```
+
+**Cache strategy**: CI caches Go modules and build cache using keys based on `go.sum` hash. Local cache locations:
+- Build cache: `~/.cache/go-build` (or `$GOCACHE`)
+- Module cache: `~/go/pkg/mod` (or `$GOMODCACHE`)
+
+**Parallelism**: Tests run with `-p 4` to utilize available CPU cores. Adjust based on your machine.
+
+**Path filters**: CI only runs on PRs when Go files, `go.mod`, `go.sum`, or workflow files change. Push to `main` always triggers full runs.
+
 ## Where to look
 
 - `cmd/` — CLI entrypoints (`dilivet`, `mldsa-vet`)
 - `code/` — core packages and tests (official ML-DSA KAT loaders live in `code/clean/kats`)
 - `code/clean/testdata/kats/ml-dsa/` — bundled FIPS 204 ACVP vectors for offline testing
-- `.github/workflows` — CI (tests, lint, release)
+- `.github/workflows` — CI (tests, lint, release, maintenance)
 - `docs/branch-protection.md` — recommended status checks for protected branches
 - `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md` — project metadata
 
