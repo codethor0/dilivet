@@ -69,9 +69,6 @@ func (a *App) runVerify(args []string) int {
 
 	valid, verr := mldsa.Verify(pub, msg, sig)
 	switch {
-	case errors.Is(verr, mldsa.ErrNotImplemented):
-		fmt.Fprintf(a.Out, "Structural checks passed (%s): full ML-DSA verification not yet implemented.\n", a.Name)
-		return 0
 	case verr != nil:
 		fmt.Fprintf(a.Err, "verification failed: %v\n", verr)
 		return 1

@@ -8,7 +8,6 @@ package cli
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"path/filepath"
@@ -72,14 +71,12 @@ func (a *App) runKATVerify(args []string) int {
 			switch {
 			case verr == nil && ok:
 				report.StrictPasses++
+			case verr == nil && !ok:
+				// Verification returned false (signature rejected)
+				report.StructuralFailures++
 			default:
-				if errors.Is(verr, mldsa.ErrNotImplemented) {
-					report.StructuralWarnings++
-				} else if verr == nil {
-					report.StructuralWarnings++
-				} else {
-					report.StructuralFailures++
-				}
+				// Verification error (unpacking, format, etc.)
+				report.StructuralFailures++
 			}
 		}
 	}
@@ -92,7 +89,7 @@ func (a *App) runKATVerify(args []string) int {
 		}{
 			Vectors: path,
 			Report:  report,
-			Note:    "Full ML-DSA verification is not yet implemented; counts reflect parsing/length checks only.",
+			Note:    "Full ML-DSA verification is implemented; counts reflect complete cryptographic verification.",
 		}
 		enc := json.NewEncoder(a.Out)
 		enc.SetIndent("", "  ")
@@ -107,7 +104,7 @@ func (a *App) runKATVerify(args []string) int {
 		fmt.Fprintf(a.Out, "Structural warnings: %d\n", report.StructuralWarnings)
 		fmt.Fprintf(a.Out, "Structural failures: %d\n", report.StructuralFailures)
 		fmt.Fprintf(a.Out, "Decode failures: %d\n", report.DecodeFailures)
-		fmt.Fprintf(a.Out, "Note: full ML-DSA verification is not yet implemented; results indicate parsing/length checks only.\n")
+		fmt.Fprintf(a.Out, "Note: full ML-DSA verification is implemented; results indicate complete cryptographic verification.\n")
 	}
 
 	if report.DecodeFailures > 0 || report.StructuralFailures > 0 {

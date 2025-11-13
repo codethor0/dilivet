@@ -19,12 +19,14 @@ func TestVerify_BasicStub(t *testing.T) {
 
 	valid, err := Verify(pk, msg, sig)
 
-	// Stub implementation should return not implemented error
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Errorf("Expected ErrNotImplemented, got %v", err)
+	// With dummy data, verification should fail (invalid signature)
+	// Errors from unpacking invalid data are acceptable
+	if err == nil {
+		t.Error("Expected error with dummy data")
 	}
+	// Dummy data should not verify
 	if valid {
-		t.Error("Stub should return false until fully implemented")
+		t.Error("Dummy data should not verify")
 	}
 }
 
@@ -112,14 +114,13 @@ func TestVerify_UnknownPublicKeyLength(t *testing.T) {
 // TestVerify_AllParameterSets tests all ML-DSA parameter set dimensions
 func TestVerify_AllParameterSets(t *testing.T) {
 	tests := []struct {
-		name    string
-		pkLen   int
-		sigLen  int
-		wantErr error
+		name   string
+		pkLen  int
+		sigLen int
 	}{
-		{"ML-DSA-44", 1312, 2420, ErrNotImplemented},
-		{"ML-DSA-65", 1952, 3309, ErrNotImplemented},
-		{"ML-DSA-87", 2592, 4627, ErrNotImplemented},
+		{"ML-DSA-44", 1312, 2420},
+		{"ML-DSA-65", 1952, 3309},
+		{"ML-DSA-87", 2592, 4627},
 	}
 
 	for _, tt := range tests {
@@ -130,11 +131,13 @@ func TestVerify_AllParameterSets(t *testing.T) {
 
 			valid, err := Verify(pk, msg, sig)
 
-			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("Expected %v, got %v", tt.wantErr, err)
+			// Dummy data should not verify
+			// Errors from unpacking invalid data are acceptable
+			if err == nil {
+				t.Error("Expected error with dummy data")
 			}
 			if valid {
-				t.Error("Stub should return false")
+				t.Error("Dummy data should not verify")
 			}
 		})
 	}
