@@ -35,7 +35,7 @@ func verifyFull(pk, msg, sig []byte, params *Params) (bool, error) {
 
 	// Unpack z vector (k polynomials, each gamma1Bits per coefficient)
 	zStart := tauBytes
-	zBytes := (params.K * poly.N * params.Gamma1Bits + 7) / 8
+	zBytes := (params.K*poly.N*params.Gamma1Bits + 7) / 8
 	if len(sig) < zStart+zBytes {
 		return false, ErrInvalidSignature
 	}
@@ -43,7 +43,7 @@ func verifyFull(pk, msg, sig []byte, params *Params) (bool, error) {
 
 	zVec := poly.NewVec(params.K)
 	for i := 0; i < params.K; i++ {
-		offset := (i * poly.N * params.Gamma1Bits + 7) / 8
+		offset := (i*poly.N*params.Gamma1Bits + 7) / 8
 		if offset+((poly.N*params.Gamma1Bits+7)/8) > len(zData) {
 			return false, ErrInvalidSignature
 		}
@@ -131,7 +131,7 @@ func verifyFull(pk, msg, sig []byte, params *Params) (bool, error) {
 	// First, unpack t₁
 	t1Vec := poly.NewVec(params.K)
 	for i := 0; i < params.K; i++ {
-		offset := (i * poly.N * params.DuBits + 7) / 8
+		offset := (i*poly.N*params.DuBits + 7) / 8
 		if offset+((poly.N*params.DuBits+7)/8) > len(t1Bytes) {
 			return false, ErrInvalidPublicKey
 		}
@@ -298,4 +298,3 @@ func hashChallenge(cPrime []byte, mu []byte, w1Encoded []byte, tau int) {
 	_, _ = xof.Write(w1Encoded)
 	_, _ = xof.Read(cPrime)
 }
-

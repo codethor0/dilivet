@@ -37,4 +37,3 @@ func FuzzDecodePublicKey(f *testing.F) {
 		_, _ = kat.Load(reqPath)
 	})
 }
-

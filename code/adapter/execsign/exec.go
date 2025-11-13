@@ -58,4 +58,3 @@ func (b Bin) Run(ctx context.Context, input []byte) ([]byte, error) {
 
 	return bytes.TrimSpace(stdout.Bytes()), nil
 }
-
