@@ -1,5 +1,7 @@
-# DiliVet – ML-DSA diagnostics and vetting toolkit
-# Multi-stage Dockerfile for web UI (backend + frontend)
+# DiliVet — ML-DSA diagnostics toolkit
+# Copyright (c) 2025 Thor Thor (codethor0)
+# Project: github.com/codethor0/dilivet
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
 
 # Stage 1: Build frontend
 FROM node:20-alpine AS frontend-builder
@@ -33,7 +35,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 # Stage 3: Final image
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates && \
+    addgroup -g 1000 dilivet && \
+    adduser -D -u 1000 -G dilivet dilivet
 
 WORKDIR /app
 
@@ -43,8 +47,17 @@ COPY --from=backend-builder /dilivet-web /app/dilivet-web
 # Copy frontend build
 COPY --from=frontend-builder /build/dist /app/web/ui/dist
 
-# Copy KAT vectors (needed for /api/kat-verify)
-COPY code/clean/testdata/kats /app/code/clean/testdata/kats
+# Copy KAT vectors from backend builder (needed for /api/kat-verify)
+# The vectors are in the source tree, copy them explicitly
+RUN mkdir -p /app/code/clean/testdata
+COPY --from=backend-builder --chown=dilivet:dilivet /build/code/clean/testdata/kats /app/code/clean/testdata/kats || \
+     (echo "Warning: KAT vectors not found, /api/kat-verify may not work" && mkdir -p /app/code/clean/testdata/kats)
+
+# Change ownership to non-root user
+RUN chown -R dilivet:dilivet /app
+
+# Switch to non-root user
+USER dilivet
 
 EXPOSE 8080
 
