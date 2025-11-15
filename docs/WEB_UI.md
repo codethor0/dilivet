@@ -11,6 +11,22 @@ The web version consists of:
 
 The backend exposes JSON APIs that the frontend consumes. The server can also serve the built frontend static files.
 
+## Quick Smoke Test
+
+For a quick verification that the Web UI is working, run:
+
+```bash
+./scripts/smoke-web.sh
+```
+
+This script:
+- Runs lightweight web tests (backend + frontend)
+- Starts the lab profile server
+- Waits for the health endpoint to be ready
+- Prints a summary with the server URL
+
+The server will remain running after the smoke test completes, so you can access it at `http://localhost:8080`.
+
 ## Running Locally
 
 ### Option 1: Development Mode (Recommended for Development)
@@ -218,6 +234,133 @@ The web components are tested as part of the main CI workflow (`.github/workflow
 - Frontend is built
 
 All web checks are integrated into the existing CI pipeline without breaking existing checks.
+
+## Security & Deployment
+
+### Threat Model
+
+DiliVet Web is designed for **internal, controlled environment** deployment. It is **not hardened for internet-exposed, multi-tenant, or untrusted user environments** without additional security layers.
+
+**Assets:**
+- Public keys, messages, signatures (diagnostic data)
+- Server resources (CPU, memory)
+
+**Assumptions:**
+- Single-tenant use (all users share the same instance)
+- Internal network deployment
+- No account management or user isolation
+
+**Out of Scope:**
+- Multi-tenant isolation
+- Rate limiting (should be handled by reverse proxy)
+- TLS termination (should be handled by reverse proxy)
+- Full audit logging
+
+### Security Features
+
+**Backend Hardening:**
+- Request size limits (10MB default, configurable)
+- Per-request timeouts (30s default, configurable)
+- CORS policy (strict by default, configurable)
+- Optional token authentication (disabled by default)
+- Input validation (parameter sets, hex encoding, lengths)
+- Sanitized logging (no sensitive data in logs)
+- HTTP method enforcement
+
+**Docker Hardening:**
+- Non-root user (UID 1000)
+- Minimal base image (Alpine)
+- Health checks
+
+### Configuration
+
+Environment variables for security:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REQUIRE_AUTH` | `false` | Enable token authentication |
+| `AUTH_TOKEN` | (none) | Shared token for authentication |
+| `ALLOWED_ORIGINS` | (none) | Comma-separated CORS origins |
+| `MAX_BODY_SIZE` | `10485760` | Max request body size (bytes) |
+| `REQUEST_TIMEOUT` | `30s` | Per-request timeout |
+
+### Recommended Deployment
+
+**Option 1: Behind Reverse Proxy (Best Practice)**
+
+Deploy behind Nginx/Envoy with:
+- TLS termination
+- Client certificate authentication (mTLS)
+- Rate limiting
+- IP allowlisting
+
+Example Nginx configuration:
+```nginx
+server {
+    listen 443 ssl;
+    server_name dilivet.internal.example.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+    ssl_client_certificate /path/to/ca.pem;
+    ssl_verify_client on;
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+**Option 2: Internal Network with Token Auth**
+
+```bash
+export REQUIRE_AUTH=true
+export AUTH_TOKEN=$(openssl rand -hex 32)
+export ALLOWED_ORIGINS=https://internal.example.com
+go run ./web/server
+```
+
+**Option 3: Docker with Security Settings**
+
+```yaml
+# docker-compose.prod.yml
+services:
+  dilivet-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "127.0.0.1:8080:8080"  # Bind to localhost only
+    environment:
+      - REQUIRE_AUTH=true
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      - ALLOWED_ORIGINS=https://internal.example.com
+    user: "1000:1000"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+```
+
+### Security Checklist
+
+**Pre-Deployment:**
+- [ ] Set `REQUIRE_AUTH=true` if using token auth
+- [ ] Generate strong `AUTH_TOKEN` (32+ random bytes)
+- [ ] Configure `ALLOWED_ORIGINS` for CORS
+- [ ] Deploy behind reverse proxy with TLS
+- [ ] Set resource limits in Docker
+- [ ] Review and restrict network access
+
+**Post-Deployment:**
+- [ ] Verify health endpoint responds
+- [ ] Test authentication (if enabled)
+- [ ] Verify CORS policy
+- [ ] Check logs for sensitive data leakage
+- [ ] Monitor resource usage
+
+For detailed security information, see `docs/WEB_SECURITY_REVIEW.md`.
 
 ## Testing and QA
 

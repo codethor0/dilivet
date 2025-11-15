@@ -4,6 +4,16 @@
 
 ## Test Execution Commands
 
+### 0. Smoke Test (Quick Verification)
+
+```bash
+./scripts/smoke-web.sh
+```
+
+**Time:** ~1-2 minutes  
+**What it does:** Runs lightweight tests, starts lab profile server, verifies health endpoint  
+**Use case:** Quick check that everything is working before deeper testing
+
 ### 1. Quick Check (Unit + Integration)
 ```bash
 ./scripts/check-web.sh
@@ -37,10 +47,10 @@ go run ./web/server
 
 | Type | Count | Status |
 |------|-------|--------|
-| Backend Unit/API | 25+ | ✅ All passing |
-| Frontend Component | 15+ | ✅ Implemented |
-| E2E (Playwright) | 10+ | ✅ Implemented |
-| Load (k6) | 3 scripts | ✅ Implemented |
+| Backend Unit/API | 25+ | All passing |
+| Frontend Component | 15+ | Implemented |
+| E2E (Playwright) | 10+ | Implemented |
+| Load (k6) | 3 scripts | Implemented |
 
 ## CI Integration
 
@@ -56,14 +66,14 @@ go run ./web/server
 
 ## Bugs Found
 
-1. ✅ Error response format inconsistency (fixed)
-2. ✅ Missing error messages (fixed)
-3. ✅ Concurrent request safety verified (tests added)
+1. Error response format inconsistency (fixed)
+2. Missing error messages (fixed)
+3. Concurrent request safety verified (tests added)
 
 ## Next Steps
 
 Before release:
-1. ✅ Run `./scripts/check-web.sh`
-2. ✅ Run `./scripts/test-web-e2e.sh`
-3. ⚠️ Run `./scripts/test-web-load.sh` (optional but recommended)
+1. Run `./scripts/check-web.sh`
+2. Run `./scripts/test-web-e2e.sh`
+3. Run `./scripts/test-web-load.sh` (optional but recommended)
 

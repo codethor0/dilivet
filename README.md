@@ -138,6 +138,10 @@ done
 
 DiliVet includes a web interface for running diagnostics from a browser. See [docs/WEB_UI.md](docs/WEB_UI.md) for details.
 
+### Web UI preview
+
+![DiliVet Web UI dashboard](docs/assets/dilivet-web-ui.png)
+
 **Quick start:**
 
 ```bash
@@ -154,6 +158,18 @@ The web UI provides:
 - Dashboard with server health status
 
 **Note:** The web UI is diagnostics tooling and should be used in controlled environments only. It is not hardened for untrusted multi-tenant deployments.
+
+### Security Posture
+
+The DiliVet Web UI is designed for controlled environments (e.g., internal networks, lab setups). It includes:
+
+- Request body size limits (configurable)
+- Per-request timeouts (configurable)
+- Strict CORS policies (configurable)
+- Optional token-based authentication
+- Sanitized logging for security events
+
+For internet-facing or multi-tenant deployments, additional hardening is required and strongly recommended. See `docs/WEB_SECURITY_REVIEW.md` and `docs/WEB_UI.md` for configuration and deployment guidance.
 
 ## Where to look
 
@@ -173,6 +189,8 @@ The web UI provides:
 ## Contributing
 
 See `CONTRIBUTING.md` for the developer quick loop, testing, and release notes.
+
+For branch protection and CI policy, see `docs/BRANCH_AND_CI_POLICY.md`.
 
 ## Citation
 
