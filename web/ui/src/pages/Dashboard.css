@@ -64,3 +64,119 @@
   font-weight: 600;
 }
 
+.auth-box {
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.auth-box h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: #007bff;
+}
+
+.auth-box p {
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.token-form {
+  margin-top: 1rem;
+}
+
+.token-input-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.token-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Courier New', monospace;
+}
+
+.token-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.token-submit-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.token-submit-btn:hover {
+  background-color: #0056b3;
+}
+
+.token-submit-btn:active {
+  background-color: #004085;
+}
+
+.token-clear-btn {
+  padding: 0.5rem 1rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.token-clear-btn:hover {
+  background-color: #5a6268;
+}
+
+.token-hint {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.token-hint code {
+  background-color: #e9ecef;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-family: 'Courier New', monospace;
+}
+
+.auth-status {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.token-clear-link {
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  background: none;
+  border: none;
+  color: #6c757d;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.token-clear-link:hover {
+  color: #495057;
+}
+

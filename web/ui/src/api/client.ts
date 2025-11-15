@@ -9,7 +9,7 @@
 const API_BASE = import.meta.env?.VITE_API_BASE || '/api'
 
 // Get auth token from environment variable or localStorage (for lab/hardened profiles)
-function getAuthToken(): string | null {
+export function getAuthToken(): string | null {
   // Check environment variable first (for server-side or build-time)
   if (typeof window !== 'undefined') {
     // Browser environment: check localStorage
@@ -25,6 +25,20 @@ function getAuthToken(): string | null {
     }
   }
   return null
+}
+
+// Set auth token programmatically
+export function setAuthToken(token: string): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('dilivet_auth_token', token)
+  }
+}
+
+// Clear auth token
+export function clearAuthToken(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('dilivet_auth_token')
+  }
 }
 
 // Helper to add auth headers if token is available
@@ -86,14 +100,24 @@ export async function getHealth(): Promise<HealthResponse> {
     headers: getHeaders(true),
   })
   if (!res.ok) {
-    // If 401, try to get token from URL or show helpful error
-    if (res.status === 401) {
-      const params = new URLSearchParams(window.location.search)
-      if (!params.get('token') && !localStorage.getItem('dilivet_auth_token')) {
-        throw new Error('Authentication required. Add ?token=YOUR_TOKEN to the URL or set dilivet_auth_token in localStorage.')
+    // Try to parse JSON error response
+    let errorMessage = res.statusText
+    try {
+      const errorData = await res.json()
+      if (errorData.error) {
+        errorMessage = errorData.error
+      } else if (errorData.message) {
+        errorMessage = errorData.message
       }
+    } catch {
+      // If JSON parsing fails, use statusText
     }
-    throw new Error(`Health check failed: ${res.statusText}`)
+    
+    // If 401/403, throw auth-specific error
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`Authentication required: ${errorMessage}`)
+    }
+    throw new Error(`Health check failed: ${errorMessage}`)
   }
   return res.json()
 }

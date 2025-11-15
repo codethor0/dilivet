@@ -175,6 +175,12 @@ func authMiddleware(requireAuth bool, authToken string) func(http.Handler) http.
 				return
 			}
 
+			// Skip auth for non-API routes (static files, SPA routes)
+			if !strings.HasPrefix(r.URL.Path, "/api/") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			if authToken == "" {
 				log.Printf("[security] AUTH_TOKEN not set but REQUIRE_AUTH=true")
 				respondError(w, http.StatusInternalServerError, "Authentication misconfigured")
