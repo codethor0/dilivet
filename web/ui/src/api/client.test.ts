@@ -1,3 +1,10 @@
+/**
+ * DiliVet — ML-DSA diagnostics toolkit
+ * Copyright (c) 2025 Thor Thor (codethor0)
+ * Project: github.com/codethor0/dilivet
+ * LinkedIn: https://www.linkedin.com/in/thor-thor0
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getHealth, verifySignature, verifyKAT, type VerifyRequest, type KATVerifyRequest } from './client'
 
@@ -22,7 +29,11 @@ describe('API Client', () => {
       const result = await getHealth()
 
       expect(result).toEqual(mockResponse)
-      expect(mockFetch).toHaveBeenCalledWith('/api/health')
+      expect(mockFetch).toHaveBeenCalledWith('/api/health', expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+      }))
     })
 
     it('throws on network error', async () => {
@@ -60,11 +71,13 @@ describe('API Client', () => {
       const result = await verifySignature(mockRequest)
 
       expect(result).toEqual(mockResponse)
-      expect(mockFetch).toHaveBeenCalledWith('/api/verify', {
+      expect(mockFetch).toHaveBeenCalledWith('/api/verify', expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
         body: JSON.stringify(mockRequest),
-      })
+      }))
     })
 
     it('handles error response', async () => {
@@ -139,11 +152,13 @@ describe('API Client', () => {
       const result = await verifyKAT(mockRequest)
 
       expect(result).toEqual(mockResponse)
-      expect(mockFetch).toHaveBeenCalledWith('/api/kat-verify', {
+      expect(mockFetch).toHaveBeenCalledWith('/api/kat-verify', expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
         body: JSON.stringify(mockRequest),
-      })
+      }))
     })
 
     it('handles error response', async () => {
