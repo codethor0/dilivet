@@ -140,13 +140,11 @@ DiliVet includes a web interface for running diagnostics from a browser. See [do
 
 ### Web UI preview
 
-![DiliVet Web UI dashboard](docs/assets/dilivet-web-ui.png)
+![DiliVet Web UI - Dashboard](docs/assets/dilivet-web-ui-1.png)
 
-![DiliVet Web UI - Dashboard view](docs/assets/dilivet-web-ui-1.png)
+![DiliVet Web UI - Verify Signature](docs/assets/dilivet-web-ui-2.png)
 
-![DiliVet Web UI - Verification](docs/assets/dilivet-web-ui-2.png)
-
-![DiliVet Web UI - KAT testing](docs/assets/dilivet-web-ui-3.png)
+![DiliVet Web UI - KAT Verification](docs/assets/dilivet-web-ui-3.png)
 
 **Quick start:**
 
