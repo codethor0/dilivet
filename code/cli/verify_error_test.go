@@ -297,7 +297,9 @@ func TestVerify_RelativePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
-	defer os.Chdir(oldDir)
+	defer func() {
+		_ = os.Chdir(oldDir) // Restore directory, ignore error in defer
+	}()
 
 	if err := os.Chdir(tDir); err != nil {
 		t.Fatalf("chdir: %v", err)

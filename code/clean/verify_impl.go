@@ -300,19 +300,6 @@ func useHintForCoeff(r uint32, hasHint bool, gamma2 int) uint32 {
 	return uint32(adjustedR1)
 }
 
-// decomposeHigh returns the high part of the decomposition.
-func decomposeHigh(r uint32, gamma2 int) uint32 {
-	// Decompose r = r1 * 2*gamma2 + r0 where |r0| <= gamma2
-	r0 := int32(poly.Canonical(r))
-	r1 := r0 / int32(2*gamma2)
-	if r0 < 0 {
-		r1--
-	}
-	if r1 < 0 {
-		r1 += int32(poly.Q)
-	}
-	return uint32(r1)
-}
 
 // encodeW1 encodes w'₁ into a byte string for hashing.
 func encodeW1(w1Prime *poly.Vec, dvBits int) []byte {
