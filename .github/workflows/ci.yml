@@ -125,10 +125,16 @@ jobs:
         if: always()
         run: |
           echo "=== Disk usage before cleanup ==="
-          df -h
-          du -sh ~/.cache/go-build ~/go/pkg/mod 2>/dev/null || true
+          df -h || echo "df command not available"
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            du -sh ~/.cache/go-build ~/go/pkg/mod 2>/dev/null || true
+          else
+            echo "Skipping du on Windows"
+          fi
           go clean -cache -modcache -testcache 2>/dev/null || true
           echo "=== Disk usage after cleanup ==="
-          df -h
-          echo "=== Total disk usage ==="
-          df -h | tail -1 | awk '{print "Total: " $2 ", Used: " $3 ", Available: " $4}'
+          df -h || echo "df command not available"
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            echo "=== Total disk usage ==="
+            df -h | tail -1 | awk '{print "Total: " $2 ", Used: " $3 ", Available: " $4}'
+          fi
