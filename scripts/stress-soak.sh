@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-# DiliVet – Long-running soak test script
-# Run from repo root after building the dilivet binary into ./dist/dilivet
+# DiliVet — ML-DSA diagnostics toolkit
+# Copyright (c) 2025 Thor Thor (codethor0)
+# Project: github.com/codethor0/dilivet
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
+
+set -euo pipefail
 
 DILIVET_BIN="${DILIVET_BIN:-./dist/dilivet}"
 

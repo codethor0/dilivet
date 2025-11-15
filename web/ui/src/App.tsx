@@ -1,3 +1,10 @@
+/**
+ * DiliVet — ML-DSA diagnostics toolkit
+ * Copyright (c) 2025 Thor Thor (codethor0)
+ * Project: github.com/codethor0/dilivet
+ * LinkedIn: https://www.linkedin.com/in/thor-thor0
+ */
+
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Verify from './pages/Verify'

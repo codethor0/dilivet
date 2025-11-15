@@ -49,9 +49,12 @@ COPY --from=frontend-builder /build/dist /app/web/ui/dist
 
 # Copy KAT vectors from backend builder (needed for /api/kat-verify)
 # The vectors are in the source tree, copy them explicitly
-RUN mkdir -p /app/code/clean/testdata
-COPY --from=backend-builder --chown=dilivet:dilivet /build/code/clean/testdata/kats /app/code/clean/testdata/kats || \
-     (echo "Warning: KAT vectors not found, /api/kat-verify may not work" && mkdir -p /app/code/clean/testdata/kats)
+    RUN mkdir -p /app/code/clean/testdata
+    COPY --from=backend-builder --chown=dilivet:dilivet /build/code/clean/testdata/kats /app/code/clean/testdata/kats || true
+    RUN if [ ! -d /app/code/clean/testdata/kats ] || [ -z "$(ls -A /app/code/clean/testdata/kats 2>/dev/null)" ]; then \
+        echo "Warning: KAT vectors not found, /api/kat-verify may not work" && \
+        mkdir -p /app/code/clean/testdata/kats; \
+    fi
 
 # Change ownership to non-root user
 RUN chown -R dilivet:dilivet /app

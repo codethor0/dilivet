@@ -38,7 +38,7 @@ DiliVet Web provides a browser-based interface for running ML-DSA diagnostics. I
 - Tests for error cases (invalid input, malformed hex, missing fields)
 - Integration-style tests using `httptest`
 
-**Status:** ✅ All tests passing
+**Status:** All tests passing
 
 ### Frontend
 
@@ -46,7 +46,7 @@ DiliVet Web provides a browser-based interface for running ML-DSA diagnostics. I
 - API client tests (mocked)
 - Basic rendering tests
 
-**Status:** ✅ Tests implemented
+**Status:** Tests implemented
 
 ## CI Integration
 
@@ -57,7 +57,7 @@ The web components are integrated into `.github/workflows/ci.yml`:
 - Frontend tests run
 - Frontend build verified
 
-**Status:** ✅ Integrated into CI
+**Status:** Integrated into CI
 
 ## Known Limitations
 

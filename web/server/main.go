@@ -25,7 +25,20 @@ func main() {
 		port = "8080"
 	}
 
-	mux := http.NewServeMux()
+	// Load security configuration
+	secCfg := loadSecurityConfig()
+
+	// Build middleware chain
+	var handler http.Handler = http.NewServeMux()
+	mux := handler.(*http.ServeMux)
+
+	// Apply security middleware (order matters: outermost first)
+	handler = corsMiddleware(secCfg.allowedOrigins)(handler)
+	handler = authMiddleware(secCfg.requireAuth, secCfg.authToken)(handler)
+	handler = timeoutMiddleware(secCfg.requestTimeout)(handler)
+	handler = maxBodySizeMiddleware(secCfg.maxBodySize)(handler)
+
+	// Register routes
 	mux.HandleFunc("/api/health", handleHealth)
 	mux.HandleFunc("/api/verify", handleVerify)
 	mux.HandleFunc("/api/kat-verify", handleKATVerify)
@@ -52,7 +65,9 @@ func main() {
 	addr := ":" + port
 	log.Printf("DiliVet Web Server starting on %s", addr)
 	log.Printf("Version: %s", version)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	log.Printf("Security: auth=%v cors=%v maxBodySize=%d timeout=%v",
+		secCfg.requireAuth, len(secCfg.allowedOrigins) > 0, secCfg.maxBodySize, secCfg.requestTimeout)
+	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
@@ -92,7 +107,8 @@ func handleVerify(w http.ResponseWriter, r *http.Request) {
 
 	var req verifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, fmt.Sprintf("Invalid JSON: %v", err))
+		logSecurityEvent("verify_error", "/api/verify", "invalid_json")
+		respondError(w, http.StatusBadRequest, "Invalid JSON format")
 		return
 	}
 
@@ -135,9 +151,14 @@ func handleVerify(w http.ResponseWriter, r *http.Request) {
 	// Verify signature
 	valid, verr := mldsa.Verify(pub, msg, sig)
 	if verr != nil {
+		// Log verification failure (sanitized)
+		logSecurityEvent("verify_failure", "/api/verify", sanitizeError(verr))
 		respondError(w, http.StatusBadRequest, fmt.Sprintf("Verification error: %v", verr))
 		return
 	}
+
+	// Log successful verification (metadata only)
+	logSecurityEvent("verify_success", "/api/verify", fmt.Sprintf("paramSet=%s valid=%v", paramSet, valid))
 
 	w.Header().Set("Content-Type", "application/json")
 	if valid {
@@ -193,9 +214,12 @@ func handleKATVerify(w http.ResponseWriter, r *http.Request) {
 
 	vectors, err := kats.LoadSigVerVectors(vectorsPath)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to load vectors: %v", err))
+		logSecurityEvent("kat_error", "/api/kat-verify", sanitizeError(err))
+		respondError(w, http.StatusInternalServerError, "Failed to load test vectors")
 		return
 	}
+
+	logSecurityEvent("kat_start", "/api/kat-verify", fmt.Sprintf("vectorsPath=%s", vectorsPath))
 
 	report := &diag.Report{}
 	var details []katVerifyDetail
@@ -273,12 +297,20 @@ func handleKATVerify(w http.ResponseWriter, r *http.Request) {
 		DecodeFailures: report.DecodeFailures,
 		Details:        details,
 	})
+
+	// Log KAT completion (metadata only)
+	logSecurityEvent("kat_complete", "/api/kat-verify",
+		fmt.Sprintf("total=%d passed=%d failed=%d", report.TotalTests, report.StrictPasses, report.StructuralFailures+report.DecodeFailures))
 }
 
 func decodeHex(s, fieldName string) ([]byte, error) {
 	clean := stripWhitespace(s)
 	if clean == "" {
 		return nil, fmt.Errorf("%s cannot be empty", fieldName)
+	}
+	// Validate hex length (reasonable bounds)
+	if len(clean) > 100000 { // ~50KB hex = ~25KB binary
+		return nil, fmt.Errorf("%s too long (max 100000 hex chars)", fieldName)
 	}
 	buf, err := hex.DecodeString(clean)
 	if err != nil {

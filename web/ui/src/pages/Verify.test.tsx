@@ -1,3 +1,10 @@
+/**
+ * DiliVet — ML-DSA diagnostics toolkit
+ * Copyright (c) 2025 Thor Thor (codethor0)
+ * Project: github.com/codethor0/dilivet
+ * LinkedIn: https://www.linkedin.com/in/thor-thor0
+ */
+
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

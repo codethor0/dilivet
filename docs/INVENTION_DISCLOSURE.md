@@ -309,12 +309,12 @@ A method for distributing cryptographic diagnostics tools with verifiable proven
 ## Implementation Status
 
 **Current State:** v0.2.3 - Fully functional with:
-- ✅ Deterministic hashing implementation
-- ✅ Edge case generation
-- ✅ Interoperability adapter
-- ✅ KAT harness with official NIST vector support
-- ✅ Supply chain security integration
-- ✅ Full ML-DSA verification implementation (FIPS 204 Algorithm 3)
+-  Deterministic hashing implementation
+-  Edge case generation
+-  Interoperability adapter
+-  KAT harness with official NIST vector support
+-  Supply chain security integration
+-  Full ML-DSA verification implementation (FIPS 204 Algorithm 3)
 
 **Future Enhancements:**
 - Expanded edge case catalog

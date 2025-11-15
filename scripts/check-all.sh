@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# DiliVet — ML-DSA diagnostics toolkit
+# Copyright (c) 2025 Thor Thor (codethor0)
+# Project: github.com/codethor0/dilivet
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
 
-# DiliVet – ML-DSA diagnostics and vetting toolkit
-# Final preflight check script: lint, test, fuzz, and cross-build.
-# Run from repo root:  ./scripts/check-all.sh
+set -euo pipefail
 
 echo "[dilivet] Go version:"
 go version || { echo "[dilivet] go is not installed or not on PATH"; exit 1; }

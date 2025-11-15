@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-# DiliVet – ML-DSA diagnostics and vetting toolkit
-# E2E test runner: starts Docker stack and runs Playwright tests
+# DiliVet — ML-DSA diagnostics toolkit
+# Copyright (c) 2025 Thor Thor (codethor0)
+# Project: github.com/codethor0/dilivet
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
 
 set -euo pipefail
 

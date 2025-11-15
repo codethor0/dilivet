@@ -36,7 +36,7 @@ This document describes the testing infrastructure for DiliVet Web, including un
   - Concurrent request handling (10 concurrent requests)
 
 **Test Count:** 25+ tests  
-**Status:** ✅ All passing
+**Status:** All passing
 
 **Key Features:**
 - No panics on malformed input
@@ -57,7 +57,7 @@ This document describes the testing infrastructure for DiliVet Web, including un
 - `KATVerify.test.tsx`: Button click, results display, error handling, loading state
 
 **Test Count:** 15+ tests  
-**Status:** ✅ Implemented (requires `npm install` in `web/ui`)
+**Status:** Implemented (requires `npm install` in `web/ui`)
 
 ### 3. End-to-End (E2E) Tests (`tests/e2e/`)
 
@@ -70,7 +70,7 @@ This document describes the testing infrastructure for DiliVet Web, including un
 - `kat-verify.spec.ts`: KAT execution, results display, loading states, error handling
 
 **Test Count:** 10+ E2E scenarios  
-**Status:** ✅ Implemented
+**Status:** Implemented
 
 **Infrastructure:**
 - Docker Compose setup (`docker-compose.e2e.yml`)
@@ -92,7 +92,7 @@ This document describes the testing infrastructure for DiliVet Web, including un
 - Error rate (< 10% threshold)
 - Response structure validation
 
-**Status:** ✅ Implemented (manual execution)
+**Status:** Implemented (manual execution)
 
 ## Test Execution
 
@@ -213,15 +213,15 @@ Load tests are **never** run in CI. They should be run:
 
 | Component | Unit Tests | Integration Tests | E2E Tests | Load Tests |
 |-----------|-----------|-------------------|-----------|------------|
-| Backend   | ✅ 25+    | ✅ (via httptest) | ✅        | ✅         |
-| Frontend  | ✅ 15+    | ✅ (mocked APIs)  | ✅        | N/A        |
-| Full Stack| N/A       | ✅ (E2E)          | ✅ 10+    | ✅ 3 scripts |
+| Backend   | 25+    | (via httptest) |        |         |
+| Frontend  | 15+    | (mocked APIs)  |        | N/A        |
+| Full Stack| N/A       | (E2E)          | 10+    | 3 scripts |
 
 ## Recommendations
 
 1. **Before Release:**
-   - Run `./scripts/check-web.sh` ✅
-   - Run `./scripts/test-web-e2e.sh` ✅
+   - Run `./scripts/check-web.sh` 
+   - Run `./scripts/test-web-e2e.sh` 
    - Run `./scripts/test-web-load.sh` (optional but recommended)
 
 2. **During Development:**
@@ -238,10 +238,10 @@ Load tests are **never** run in CI. They should be run:
 
 The DiliVet Web testing infrastructure is comprehensive and production-ready:
 
-- ✅ **Backend:** Extensive unit and integration tests (25+ tests)
-- ✅ **Frontend:** Component and API client tests (15+ tests)
-- ✅ **E2E:** Cross-browser Playwright tests (10+ scenarios)
-- ✅ **Load:** k6-based stress tests (3 scripts)
+- **Backend:** Extensive unit and integration tests (25+ tests)
+- **Frontend:** Component and API client tests (15+ tests)
+- **E2E:** Cross-browser Playwright tests (10+ scenarios)
+- **Load:** k6-based stress tests (3 scripts)
 
 All tests are automated via scripts and can be run on macOS with Docker. The test suite provides confidence in the web UI's correctness, robustness, and performance.
 

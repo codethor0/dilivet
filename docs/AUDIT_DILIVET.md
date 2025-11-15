@@ -72,10 +72,10 @@ DiliVet has been subjected to a comprehensive audit focusing on correctness, rob
 All tests pass with race detector enabled:
 
 ```bash
-✅ go test -race -p 4 ./...
-✅ All packages: PASS
-✅ No data races detected
-✅ No panics on malformed input
+go test -race -p 4 ./...
+All packages: PASS
+No data races detected
+No panics on malformed input
 ```
 
 ---
@@ -86,7 +86,7 @@ All tests pass with race detector enabled:
 
 **Issue:** CLI error messages were functional but could be more descriptive.
 
-**Status:** ✅ **IMPROVED** - Added comprehensive error-path tests ensuring:
+**Status:** **IMPROVED** - Added comprehensive error-path tests ensuring:
 - Missing files produce clear error messages
 - Empty files are handled gracefully
 - Invalid hex is detected and reported
@@ -99,7 +99,7 @@ All tests pass with race detector enabled:
 
 **Issue:** Pack/unpack operations lacked comprehensive round-trip testing.
 
-**Status:** ✅ **FIXED** - Added property tests covering:
+**Status:** **FIXED** - Added property tests covering:
 - All bit widths (1-32 bits)
 - Various lengths (1, 10, 100, 256, poly.N)
 - Boundary conditions (empty, all zeros, all max values)
@@ -109,15 +109,15 @@ All tests pass with race detector enabled:
 - `code/pack/pack_property_test.go` (new, 220+ lines)
 
 **Test Results:**
-- ✅ All round-trip tests pass
-- ✅ Boundary condition tests pass
-- ✅ Overflow detection works correctly
+- All round-trip tests pass
+- Boundary condition tests pass
+- Overflow detection works correctly
 
 ### 3. Deterministic Signer Property Validation
 
 **Issue:** Deterministic signer lacked property tests for determinism and diffusion.
 
-**Status:** ✅ **FIXED** - Added tests for:
+**Status:** **FIXED** - Added tests for:
 - Determinism: Same (sk, msg) → same signature
 - Message sensitivity: Different messages → different signatures
 - Diffusion: Single bit flip → many bits change (≥40% threshold)
@@ -127,15 +127,15 @@ All tests pass with race detector enabled:
 - `code/signer/signer_property_test.go` (new, 130+ lines)
 
 **Test Results:**
-- ✅ Determinism verified
-- ✅ Diffusion property confirmed (122/256 bits differ, >40% threshold)
-- ✅ Bit-flip rejection works correctly
+- Determinism verified
+- Diffusion property confirmed (122/256 bits differ, >40% threshold)
+- Bit-flip rejection works correctly
 
 ### 4. KAT Loader Robustness
 
 **Issue:** KAT loader needed tests for malformed JSON handling.
 
-**Status:** ✅ **FIXED** - Added corruption tests for:
+**Status:** **FIXED** - Added corruption tests for:
 - Missing required fields (pk, sig, message)
 - Wrong data types (string instead of hex)
 - Invalid JSON structure
@@ -153,7 +153,7 @@ All tests pass with race detector enabled:
 
 **Issue:** Property test for bits=32 caused integer overflow in test code.
 
-**Status:** ✅ **FIXED** - Special handling for 32-bit case:
+**Status:** **FIXED** - Special handling for 32-bit case:
 - Use `^uint32(0)` instead of `(1 << 32) - 1` to avoid overflow
 - Test values generated correctly for 32-bit case
 
@@ -170,16 +170,16 @@ All three parameter sets match FIPS 204 specifications:
 
 | Parameter Set | PK Bytes | Sig Bytes | K | L | Status |
 |---------------|----------|-----------|---|---|--------|
-| ML-DSA-44     | 1312     | 2420      | 4 | 4 | ✅ Verified |
-| ML-DSA-65     | 1952     | 3309      | 6 | 5 | ✅ Verified |
-| ML-DSA-87     | 2592     | 4627      | 8 | 7 | ✅ Verified |
+| ML-DSA-44     | 1312     | 2420      | 4 | 4 | Verified |
+| ML-DSA-65     | 1952     | 3309      | 6 | 5 | Verified |
+| ML-DSA-87     | 2592     | 4627      | 8 | 7 | Verified |
 
 **Validation Method:**
 - Cross-referenced `code/clean/params.go` with FIPS 204 specification
 - Test cases in `code/clean/params_test.go` verify dimensions
 - `validParamSets` map in `mldsa.go` matches expected sizes
 
-**Result:** ✅ All parameter sets are correctly defined according to FIPS 204.
+**Result:** All parameter sets are correctly defined according to FIPS 204.
 
 ---
 
@@ -196,7 +196,7 @@ if idx >= len(out) {
 }
 ```
 
-**Assessment:** ✅ **ACCEPTABLE**
+**Assessment:** **ACCEPTABLE**
 - These are internal consistency checks, not user-facing error paths
 - They guard against programming errors, not user input
 - The conditions should never occur if the code is correct
@@ -218,7 +218,7 @@ if idx >= len(out) {
 
 ### Error Handling
 
-**Assessment:** ✅ **EXCELLENT**
+**Assessment:** **EXCELLENT**
 - All public functions validate inputs
 - Errors are returned, not panicked
 - Error messages are descriptive
@@ -237,21 +237,21 @@ if idx >= len(out) {
 ### Existing Fuzz Targets
 
 1. **FuzzDecodePublicKey** (`fuzz/fuzz_decode_pubkey_test.go`)
-   - Status: ✅ Active
+   - Status: Active
    - Coverage: Public key decoding paths
    - Results: No crashes found in 30s runs
 
 2. **FuzzVerify** (`fuzz/fuzz_verify_test.go`)
-   - Status: ✅ Active
+   - Status: Active
    - Coverage: Signature verification paths
    - Results: No crashes found in 30s runs
 
 ### Fuzz Test Results
 
 ```bash
-✅ FuzzDecodePublicKey: 17,795 execs, 2 interesting cases
-✅ FuzzVerify: 18,323,880 execs, 0 crashes
-✅ All fuzz targets complete without panics
+FuzzDecodePublicKey: 17,795 execs, 2 interesting cases
+FuzzVerify: 18,323,880 execs, 0 crashes
+All fuzz targets complete without panics
 ```
 
 ### Recommendations for Additional Fuzz Targets
@@ -272,34 +272,34 @@ if idx >= len(out) {
 #### Test Coverage
 
 1. **Large Input Files**
-   - 10MB message files: ✅ Handled correctly
-   - 100MB message files: ✅ Handled correctly
+   - 10MB message files: Handled correctly
+   - 100MB message files: Handled correctly
    - No memory issues or hangs observed
 
 2. **Weird Hex File Formats**
-   - CRLF line endings: ✅ Parsed correctly
-   - UTF-8 BOM: ✅ Handled gracefully
-   - Mixed whitespace: ✅ Trimmed correctly
-   - Mixed case hex: ✅ Accepted (case-insensitive)
+   - CRLF line endings: Parsed correctly
+   - UTF-8 BOM: Handled gracefully
+   - Mixed whitespace: Trimmed correctly
+   - Mixed case hex: Accepted (case-insensitive)
    - All formats produce clean error messages (no panics)
 
 3. **Error-Path Stress Loop**
-   - 50 iterations with malformed inputs: ✅ All clean failures
+   - 50 iterations with malformed inputs: All clean failures
    - No panics, no stack traces, no hangs
    - Clean error messages only
 
 4. **KAT Verification Soak Test**
-   - 50 iterations: ✅ All completed
-   - 1000 iterations (optional soak): ✅ Ready for long-running validation
+   - 50 iterations: All completed
+   - 1000 iterations (optional soak): Ready for long-running validation
    - No memory leaks or resource accumulation observed
 
 #### Findings
 
-- ✅ **No panics** under stress conditions
-- ✅ **No hangs** with large inputs (up to 100MB)
-- ✅ **Clean error handling** for all malformed inputs
-- ✅ **Robust parsing** of various hex file formats
-- ✅ **Stable memory usage** during repeated operations
+- **No panics** under stress conditions
+- **No hangs** with large inputs (up to 100MB)
+- **Clean error handling** for all malformed inputs
+- **Robust parsing** of various hex file formats
+- **Stable memory usage** during repeated operations
 
 #### Stress Test Scripts
 
@@ -321,18 +321,18 @@ go build -o dist/dilivet ./cmd/dilivet
 
 | Test Case | Status | Notes |
 |-----------|--------|-------|
-| Missing file | ✅ PASS | Clear error message |
-| Empty file | ✅ PASS | Detected and reported |
-| Non-hex content | ✅ PASS | Hex decode error |
-| Invalid format | ✅ PASS | Format error message |
-| Hex with whitespace | ✅ PASS | Whitespace stripped correctly |
-| CRLF line endings | ✅ PASS | Handled correctly |
-| UTF-8 BOM | ✅ PASS | May cause decode issues (acceptable) |
-| Large input (10MB) | ✅ PASS | No panic, completes |
-| Relative paths | ✅ PASS | Works correctly |
-| Path traversal | ✅ PASS | Fails safely with read error |
+| Missing file | PASS | Clear error message |
+| Empty file | PASS | Detected and reported |
+| Non-hex content | PASS | Hex decode error |
+| Invalid format | PASS | Format error message |
+| Hex with whitespace | PASS | Whitespace stripped correctly |
+| CRLF line endings | PASS | Handled correctly |
+| UTF-8 BOM | PASS | May cause decode issues (acceptable) |
+| Large input (10MB) | PASS | No panic, completes |
+| Relative paths | PASS | Works correctly |
+| Path traversal | PASS | Fails safely with read error |
 
-**Overall:** ✅ All CLI error paths tested and working correctly.
+**Overall:** All CLI error paths tested and working correctly.
 
 ---
 
@@ -340,7 +340,7 @@ go build -o dist/dilivet ./cmd/dilivet
 
 ### Low Priority Issues
 
-1. **Performance Optimization** (Line 79 TODO) ✅ **EVALUATED**
+1. **Performance Optimization** (Line 79 TODO) **EVALUATED**
    - **Benchmark Results** (Apple M3 Max, arm64):
      - ML-DSA-44: ~43μs/op, 33KB, 41 allocs
      - ML-DSA-65: ~82μs/op, 62KB, 73 allocs
@@ -353,7 +353,7 @@ go build -o dist/dilivet ./cmd/dilivet
    - **Recommendation:** Defer caching unless profiling shows it's a bottleneck in batch verification scenarios
    - **Status:** Benchmarked, decision deferred
 
-2. **Hint Application** (Line 246 TODO) ✅ **FIXED**
+2. **Hint Application** (Line 246 TODO) **FIXED**
    - **Previous issue:** `useHint()` function performed decomposition but didn't use hint vector `h`
    - **Fix implemented:** Full FIPS 204 Algorithm 3 hint application
      - Hint vector `h` contains indices of coefficients that need adjustment
@@ -363,7 +363,7 @@ go build -o dist/dilivet ./cmd/dilivet
      - `TestUseHint_Property2_NoOpWhenNoHints`: Verifies no-op when no hints
      - `TestUseHint_Property3_Bounds`: Verifies output bounds
      - `FuzzMakeUseHintRoundTrip`: Fuzz test for round-trip correctness (5M+ execs, all passing)
-   - **Status:** ✅ Complete - all tests passing, fuzz test validates correctness
+   - **Status:** Complete - all tests passing, fuzz test validates correctness
 
 ### Potential Enhancements
 
@@ -388,7 +388,7 @@ go build -o dist/dilivet ./cmd/dilivet
 
 ### Input Validation
 
-✅ **STRONG**
+**STRONG**
 - All inputs validated before processing
 - Length checks prevent buffer overflows
 - Type checks prevent format confusion
@@ -396,14 +396,14 @@ go build -o dist/dilivet ./cmd/dilivet
 
 ### Constant-Time Operations
 
-✅ **GOOD**
+**GOOD**
 - `crypto/subtle.ConstantTimeCompare` used where appropriate
 - Verification uses constant-time comparison
 - Deterministic signer uses constant-time operations
 
 ### Error Information Leakage
 
-✅ **SAFE**
+**SAFE**
 - Error messages are descriptive but don't leak sensitive data
 - No stack traces exposed to users
 - Errors are functional, not informational
@@ -416,14 +416,14 @@ go build -o dist/dilivet ./cmd/dilivet
 
 | Package | Test Files | Status | Coverage |
 |---------|------------|--------|----------|
-| `code/cli` | 3 files | ✅ PASS | Comprehensive |
-| `code/clean` | 2 files | ✅ PASS | Core logic |
-| `code/clean/kats` | 2 files | ✅ PASS | Loader + corruption |
-| `code/pack` | 2 files | ✅ PASS | Round-trip + properties |
-| `code/signer` | 1 file | ✅ PASS | Properties |
-| `code/poly` | 2 files | ✅ PASS | Arithmetic |
-| `code/params` | 1 file | ✅ PASS | Parameter sets |
-| `fuzz` | 2 files | ✅ PASS | Fuzz targets |
+| `code/cli` | 3 files | PASS | Comprehensive |
+| `code/clean` | 2 files | PASS | Core logic |
+| `code/clean/kats` | 2 files | PASS | Loader + corruption |
+| `code/pack` | 2 files | PASS | Round-trip + properties |
+| `code/signer` | 1 file | PASS | Properties |
+| `code/poly` | 2 files | PASS | Arithmetic |
+| `code/params` | 1 file | PASS | Parameter sets |
+| `fuzz` | 2 files | PASS | Fuzz targets |
 
 ### New Test Files Added
 
@@ -440,21 +440,21 @@ go build -o dist/dilivet ./cmd/dilivet
 
 ### Large Input Handling
 
-✅ **TESTED**
+**TESTED**
 - 10MB message file: Handles correctly, no memory issues
 - Very long hex files: Processed correctly
 - **Result:** No quadratic behavior detected
 
 ### Concurrent Execution
 
-✅ **TESTED**
+**TESTED**
 - Race detector enabled: No data races found
 - Parallel test execution (`-p 4`): All tests pass
 - **Result:** Thread-safe implementation
 
 ### Path Edge Cases
 
-✅ **TESTED**
+**TESTED**
 - Relative paths: Work correctly
 - Path traversal attempts: Fail safely
 - Non-existent directories: Error handled
@@ -466,10 +466,10 @@ go build -o dist/dilivet ./cmd/dilivet
 
 ### Immediate Actions
 
-1. ✅ **DONE**: Comprehensive error-path testing
-2. ✅ **DONE**: Property-based testing for pack/unpack
-3. ✅ **DONE**: Deterministic signer property validation
-4. ✅ **DONE**: KAT loader corruption testing
+1. **DONE**: Comprehensive error-path testing
+2. **DONE**: Property-based testing for pack/unpack
+3. **DONE**: Deterministic signer property validation
+4. **DONE**: KAT loader corruption testing
 
 ### Short-Term (Next Sprint)
 
@@ -505,19 +505,19 @@ go build -o dist/dilivet ./cmd/dilivet
 
 DiliVet is in **excellent condition** after this audit:
 
-✅ **Correctness**: All parameter sets match FIPS 204, verification logic is sound  
-✅ **Robustness**: Comprehensive error handling, no panics on malformed input  
-✅ **Test Coverage**: Extensive test suite covering unit, property, error-path, and fuzz testing  
-✅ **Code Quality**: Clean code, good error messages, defensive programming  
+**Correctness**: All parameter sets match FIPS 204, verification logic is sound  
+**Robustness**: Comprehensive error handling, no panics on malformed input  
+**Test Coverage**: Extensive test suite covering unit, property, error-path, and fuzz testing  
+**Code Quality**: Clean code, good error messages, defensive programming  
 
 **Remaining Work:**
-- ✅ Hint application TODO completed with full FIPS 204 implementation
-- ✅ Matrix A expansion benchmarked (caching decision deferred)
-- ✅ Stress tests completed (no panics, no hangs)
+- Hint application TODO completed with full FIPS 204 implementation
+- Matrix A expansion benchmarked (caching decision deferred)
+- Stress tests completed (no panics, no hangs)
 - Consider performance optimizations (low priority)
 - Add additional fuzz targets (enhancement)
 
-**Overall Assessment:** ✅ **PRODUCTION READY**
+**Overall Assessment:** **PRODUCTION READY**
 
 The codebase is well-tested, robust, and ready for production use. The audit revealed no critical bugs, and all identified issues are either fixed or documented as low-priority enhancements.
 

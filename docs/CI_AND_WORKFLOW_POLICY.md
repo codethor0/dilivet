@@ -18,22 +18,26 @@ DiliVet uses a minimal set of three GitHub Actions workflows:
 
 **Triggers**:
 - Push to `main` branch
-- Push to `feat/**` branches
-- Pull requests targeting `main` (with path filters)
+- Pull requests targeting `main`
 
 **Jobs**:
-- `preflight`: Fast lint and type checking (PRs only)
-- `test`: Full test suite including:
-  - Go vet
-  - Go tests with race detector
-  - golangci-lint
-  - Web backend tests
-  - Web frontend tests and build
+- `go-ci`: Core Go CLI tests and builds
+  - Runs `./scripts/check-all.sh` which includes:
+    - Go vet
+    - golangci-lint (if available)
+    - Go tests with race detector
+    - Fuzz smoke tests (short runs)
+    - Cross-platform builds
+- `web-ci`: Web stack tests and build
+  - Web backend tests (`go test ./web/server/...`)
+  - Frontend tests (`npm test`)
+  - Frontend build (`npm run build`)
 
 **Policy**:
 - All test steps are **strict** - failures cause the workflow to fail
-- No `continue-on-error` on critical test steps
+- No `continue-on-error` on any test or build steps
 - Runs on `ubuntu-latest` only
+- Both jobs run in parallel
 
 **Cache Strategy**:
 - Cache keys prefixed with `dilivet-v1-ci-` to invalidate old caches
@@ -44,7 +48,7 @@ DiliVet uses a minimal set of three GitHub Actions workflows:
 **Purpose**: Run fuzz tests to discover edge cases and potential bugs.
 
 **Triggers**:
-- Pull requests (when fuzz-related files change)
+- Pull requests targeting `main`
 - Manual dispatch via `workflow_dispatch`
 
 **Jobs**:

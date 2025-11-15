@@ -9,19 +9,9 @@ on:
   push:
     branches:
       - main
-      - 'feat/**'
   pull_request:
-    paths:
-      - '**.go'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/ci.yml'
-      - 'fuzz/**'
-      - 'code/**'
-      - 'cmd/**'
-      - 'web/**'
-      - 'scripts/**'
-      - 'tests/**'
+    branches:
+      - main
 
 # Cancel in-progress runs for the same PR/branch
 concurrency:
@@ -34,20 +24,16 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
-  # Fast preflight: lint and types before full test suite
-  preflight:
-    name: preflight (lint + types)
+  go-ci:
+    name: Go CLI tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
       - name: Check disk space
         shell: bash
         run: |
-          if [ "${{ runner.os }}" != "Windows" ]; then
-            df -h || echo "df command not available"
-          fi
+          df -h || echo "df command not available"
           echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
 
       - name: Setup Go
@@ -65,79 +51,46 @@ jobs:
           restore-keys: |
             dilivet-v1-ci-${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --out-format=github-actions --timeout=5m
-
-      - name: go vet
-        run: go vet ./...
+      - name: Run check-all script
+        run: ./scripts/check-all.sh
 
       - name: Cleanup
         if: always()
+        shell: bash
         run: |
-          if [ "${{ runner.os }}" != "Windows" ]; then
-            du -sh ~/.cache/go-build ~/go/pkg/mod 2>/dev/null || true
-          fi
           go clean -cache -modcache -testcache 2>/dev/null || true
 
-  test:
-    name: go 1.23 • ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    needs: [preflight]
-    if: always() && (needs.preflight.result == 'success' || needs.preflight.result == 'skipped' || github.event_name != 'pull_request')
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-
+  web-ci:
+    name: Web stack tests
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Check disk space
         shell: bash
         run: |
-          if [ "${{ runner.os }}" != "Windows" ]; then
-            df -h || echo "df command not available"
-          fi
+          df -h || echo "df command not available"
           echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
-          echo "MAX_LOG_MB=${MAX_LOG_MB}" >> $GITHUB_ENV
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Cache Go modules and build cache
+      - name: Cache Go modules
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: dilivet-v1-ci-${{ runner.os }}-go-1.23-${{ hashFiles('go.sum') }}
+          key: dilivet-v1-ci-web-${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
           restore-keys: |
-            dilivet-v1-ci-${{ runner.os }}-go-1.23-
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: go test (race)
-        run: go test -race -p 4 ./...
-
-      - name: golangci-lint
-        if: matrix.os == 'ubuntu-latest'
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --out-format=github-actions --timeout=5m
+            dilivet-v1-ci-web-${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Web backend tests
-        if: matrix.os == 'ubuntu-latest'
         run: go test ./web/server/...
 
       - name: Setup Node.js
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -145,37 +98,19 @@ jobs:
           cache-dependency-path: web/ui/package.json
 
       - name: Install frontend dependencies
-        if: matrix.os == 'ubuntu-latest'
         working-directory: web/ui
         run: npm ci
 
       - name: Frontend tests
-        if: matrix.os == 'ubuntu-latest'
         working-directory: web/ui
         run: npm test -- --run
 
       - name: Frontend build
-        if: matrix.os == 'ubuntu-latest'
         working-directory: web/ui
         run: npm run build
 
-      - name: Cleanup and report
+      - name: Cleanup
         if: always()
         shell: bash
         run: |
-          echo "=== Disk usage before cleanup ==="
-          if [ "${{ runner.os }}" != "Windows" ]; then
-            df -h || echo "df command not available"
-            du -sh ~/.cache/go-build ~/go/pkg/mod 2>/dev/null || true
-          else
-            echo "Windows runner - skipping Unix-specific commands"
-          fi
           go clean -cache -modcache -testcache 2>/dev/null || true
-          echo "=== Disk usage after cleanup ==="
-          if [ "${{ runner.os }}" != "Windows" ]; then
-            df -h || echo "df command not available"
-            echo "=== Total disk usage ==="
-            df -h | tail -1 | awk '{print "Total: " $2 ", Used: " $3 ", Available: " $4}' || true
-          else
-            echo "Cleanup complete on Windows runner"
-          fi

@@ -1,5 +1,7 @@
-# DiliVet – ML-DSA diagnostics and vetting toolkit
-# Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+# DiliVet — ML-DSA diagnostics toolkit
+# Copyright (c) 2025 Thor Thor (codethor0)
+# Project: github.com/codethor0/dilivet
+# LinkedIn: https://www.linkedin.com/in/thor-thor0
 
 FROM gcr.io/distroless/static:nonroot
 
