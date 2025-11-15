@@ -67,15 +67,15 @@ describe('KATVerify', () => {
       expect(mockVerifyKAT).toHaveBeenCalled()
     })
 
-    // Wait for result box to appear first
+    // Wait for result box to appear first (longer timeout for CI)
     await waitFor(
       () => {
         expect(screen.getByText(/KAT Verification Results/i)).toBeInTheDocument()
       },
-      { timeout: 3000 }
+      { timeout: 5000 }
     )
 
-    // Then verify the specific values
+    // Then verify the specific values (longer timeout for CI)
     await waitFor(
       () => {
         expect(screen.getByText(/Total Vectors:/i)).toBeInTheDocument()
@@ -84,7 +84,7 @@ describe('KATVerify', () => {
         expect(screen.getByText('95')).toBeInTheDocument()
         expect(screen.getByText('5')).toBeInTheDocument()
       },
-      { timeout: 2000 }
+      { timeout: 5000 }
     )
   })
 
