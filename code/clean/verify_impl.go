@@ -237,14 +237,67 @@ func hashPublicKey(tr []byte, pk []byte) {
 }
 
 // useHint applies the hint h to reconstruct w'₁ from w.
+// The hint vector h contains indices of coefficients that need adjustment.
+// For each coefficient i, if i is in h, we adjust the decomposition.
 func useHint(w1Prime *poly.Poly, w *poly.Poly, h []uint8, vecIdx int, gamma2 int) error {
-	// For each coefficient in w, use the hint to determine the high bits
-	// This is a simplified version - full implementation needs proper hint application
-	for i := range w1Prime.Coeffs {
-		w1Prime.Coeffs[i] = decomposeHigh(w.Coeffs[i], gamma2)
+	// Build a set of hint indices for O(1) lookup
+	hintSet := make(map[uint8]bool, len(h))
+	for _, idx := range h {
+		if int(idx) >= poly.N {
+			return fmt.Errorf("mldsa: invalid hint index %d (>= %d)", idx, poly.N)
+		}
+		hintSet[idx] = true
 	}
-	// TODO: Apply hints from h vector properly
+
+	// Apply hint logic to each coefficient
+	for i := range w1Prime.Coeffs {
+		hasHint := hintSet[uint8(i)]
+		w1Prime.Coeffs[i] = useHintForCoeff(w.Coeffs[i], hasHint, gamma2)
+	}
+
 	return nil
+}
+
+// useHintForCoeff applies hint logic to a single coefficient.
+// According to FIPS 204, if hasHint is true, it means |r0| > gamma2 and we need to adjust r1.
+// The correct reconstruction: if r0 > gamma2, r1' = r1 + 1; if r0 < -gamma2, r1' = r1 - 1.
+func useHintForCoeff(r uint32, hasHint bool, gamma2 int) uint32 {
+	canon := poly.Canonical(r)
+
+	// Standard decomposition: r = r1 * 2*gamma2 + r0 where |r0| <= gamma2
+	r1 := canon / int32(2*gamma2)
+	if canon < 0 {
+		r1--
+	}
+	r0 := canon - r1*int32(2*gamma2)
+
+	if !hasHint {
+		// No hint, use standard decomposition
+		if r1 < 0 {
+			r1 += int32(poly.Q)
+		}
+		return uint32(r1 % int32(poly.Q))
+	}
+
+	// Hint present: |r0| > gamma2, adjust r1
+	var adjustedR1 int32
+	if r0 > int32(gamma2) {
+		// r0 is too large, increase r1 by 1
+		adjustedR1 = r1 + 1
+	} else if r0 < -int32(gamma2) {
+		// r0 is too negative, decrease r1 by 1
+		adjustedR1 = r1 - 1
+	} else {
+		// This shouldn't happen if hasHint is true, but handle it
+		adjustedR1 = r1
+	}
+
+	// Normalize to [0, q-1]
+	if adjustedR1 < 0 {
+		adjustedR1 += int32(poly.Q)
+	}
+	adjustedR1 %= int32(poly.Q)
+	return uint32(adjustedR1)
 }
 
 // decomposeHigh returns the high part of the decomposition.
