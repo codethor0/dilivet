@@ -1,7 +1,5 @@
-// © 2025 Thor Thor
-// Contact: codethor@gmail.com
-// LinkedIn: https://www.linkedin.com/in/thor-thor0
-// SPDX-License-Identifier: MIT
+// DiliVet – ML-DSA diagnostics and vetting toolkit
+// Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
 
 // Package cli provides shared CLI application logic for dilivet and mldsa-vet.
 //

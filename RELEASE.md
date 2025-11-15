@@ -1,3 +1,8 @@
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
+
 # Release Process
 
 DiliVet uses semantic versioning (`vMAJOR.MINOR.PATCH`) and GitHub Releases.

@@ -1,3 +1,8 @@
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
+
 # CI/CD Improvements Summary
 
 ## Overview
@@ -162,11 +167,11 @@ This document summarizes the comprehensive CI/CD improvements implemented to enh
 ## Quality Gates Maintained
 
 All improvements maintain existing quality gates:
-- ✅ All tests still run with race detector
-- ✅ Linting still enforced with `golangci-lint`
-- ✅ No test skipping or coverage reduction
-- ✅ Branch protection rules unchanged
-- ✅ Release process integrity maintained
+- All tests still run with race detector
+- Linting still enforced with `golangci-lint`
+- No test skipping or coverage reduction
+- Branch protection rules unchanged
+- Release process integrity maintained
 
 ## Reproducibility
 

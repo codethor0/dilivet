@@ -1,3 +1,8 @@
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
+
 # Maintainers
 
 This file lists the active maintainers of DiliVet and their areas of responsibility.

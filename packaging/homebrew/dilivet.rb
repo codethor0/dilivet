@@ -1,3 +1,6 @@
+# DiliVet – ML-DSA diagnostics and vetting toolkit
+# Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+
 class Dilivet < Formula
   desc "Diagnostics and vetting toolkit for ML-DSA (Dilithium-like) signatures"
   homepage "https://github.com/codethor0/dilivet"

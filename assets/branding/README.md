@@ -1,3 +1,8 @@
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
+
 # DiliVet Branding Assets
 
 These PNG assets are intended for use in documentation, release notes, and

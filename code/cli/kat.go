@@ -1,9 +1,7 @@
-package cli
+// DiliVet – ML-DSA diagnostics and vetting toolkit
+// Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
 
-// © 2025 Thor Thor
-// Contact: codethor@gmail.com
-// LinkedIn: https://www.linkedin.com/in/thor-thor0
-// SPDX-License-Identifier: MIT
+package cli
 
 import (
 	"encoding/hex"

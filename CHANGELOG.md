@@ -1,3 +1,8 @@
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

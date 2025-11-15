@@ -1,3 +1,8 @@
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
+
 # Code of Conduct
 
 This project follows the Contributor Covenant Code of Conduct. By participating, you agree to abide by its terms.
