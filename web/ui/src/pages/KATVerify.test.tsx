@@ -1,3 +1,10 @@
+/**
+ * DiliVet — ML-DSA diagnostics toolkit
+ * Copyright (c) 2025 Thor Thor (codethor0)
+ * Project: github.com/codethor0/dilivet
+ * LinkedIn: https://www.linkedin.com/in/thor-thor0
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -55,12 +62,30 @@ describe('KATVerify', () => {
 
     await user.click(screen.getByRole('button', { name: /Run KAT Verification/i }))
 
+    // Wait for API call to complete
     await waitFor(() => {
-      expect(screen.getByText(/Total Vectors:/)).toBeInTheDocument()
-      expect(screen.getByText(/100/)).toBeInTheDocument()
-      expect(screen.getByText(/95/)).toBeInTheDocument()
-      expect(screen.getByText(/5/)).toBeInTheDocument()
+      expect(mockVerifyKAT).toHaveBeenCalled()
     })
+
+    // Wait for result box to appear first
+    await waitFor(
+      () => {
+        expect(screen.getByText(/KAT Verification Results/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+
+    // Then verify the specific values
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Total Vectors:/i)).toBeInTheDocument()
+        // Use more specific queries that match the actual rendered text
+        expect(screen.getByText('100')).toBeInTheDocument()
+        expect(screen.getByText('95')).toBeInTheDocument()
+        expect(screen.getByText('5')).toBeInTheDocument()
+      },
+      { timeout: 2000 }
+    )
   })
 
   it('displays error when verification fails', async () => {
