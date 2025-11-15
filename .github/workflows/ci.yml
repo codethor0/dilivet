@@ -61,9 +61,9 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
+          key: dilivet-v1-ci-${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            dilivet-v1-ci-${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -115,9 +115,9 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-1.23-${{ hashFiles('go.sum') }}
+          key: dilivet-v1-ci-${{ runner.os }}-go-1.23-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-1.23-
+            dilivet-v1-ci-${{ runner.os }}-go-1.23-
 
       - name: go vet
         run: go vet ./...
@@ -131,14 +131,11 @@ jobs:
         with:
           version: latest
           args: --out-format=github-actions --timeout=5m
-        continue-on-error: true
 
       - name: Web backend tests
         if: matrix.os == 'ubuntu-latest'
         run: go test ./web/server/...
-        continue-on-error: true
 
-      # Frontend steps are optional - skip if they cause issues
       - name: Setup Node.js
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-node@v4
@@ -146,25 +143,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: web/ui/package.json
-        continue-on-error: true
 
       - name: Install frontend dependencies
         if: matrix.os == 'ubuntu-latest'
         working-directory: web/ui
-        run: npm ci || echo "Frontend dependencies failed, skipping frontend steps"
-        continue-on-error: true
+        run: npm ci
 
       - name: Frontend tests
         if: matrix.os == 'ubuntu-latest'
         working-directory: web/ui
-        run: npm test -- --run || echo "Frontend tests failed, continuing..."
-        continue-on-error: true
+        run: npm test -- --run
 
       - name: Frontend build
         if: matrix.os == 'ubuntu-latest'
         working-directory: web/ui
-        run: npm run build || echo "Frontend build failed, continuing..."
-        continue-on-error: true
+        run: npm run build
 
       - name: Cleanup and report
         if: always()

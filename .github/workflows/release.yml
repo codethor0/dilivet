@@ -22,10 +22,45 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
+  build-and-test:
+    if: startsWith(github.ref, 'refs/tags/v')
+    name: build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check disk space
+        run: |
+          df -h
+          echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: dilivet-v1-release-${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            dilivet-v1-release-${{ runner.os }}-go-${{ env.GO_VERSION }}-
+
+      - name: Run check-all script
+        run: ./scripts/check-all.sh
+
+      - name: Cleanup
+        if: always()
+        run: |
+          go clean -cache -modcache -testcache 2>/dev/null || true
+
   build:
     if: startsWith(github.ref, 'refs/tags/v')
     name: build ${{ matrix.goos }}-${{ matrix.goarch }}
     runs-on: ubuntu-latest
+    needs: build-and-test
     strategy:
       fail-fast: false
       matrix:
@@ -50,9 +85,9 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
+          key: dilivet-v1-release-${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            dilivet-v1-release-${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Build
         run: |
@@ -158,6 +193,8 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # SLSA provenance generation is optional and may fail if OIDC is not configured
+      # This step is allowed to fail to prevent blocking releases
       - name: Generate SLSA provenance
         uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1
         with:
@@ -191,6 +228,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Cosign signing is optional and requires COSIGN_EXPERIMENTAL=1 or key setup
+      # These steps are allowed to fail to prevent blocking releases when secrets are missing
       - name: Sign release artifacts with cosign
         uses: sigstore/cosign-installer@v4
         continue-on-error: true

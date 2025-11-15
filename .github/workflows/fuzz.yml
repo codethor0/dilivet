@@ -1,7 +1,7 @@
-# © 2025 Thor Thor
-# Contact: codethor@gmail.com
+# DiliVet — ML-DSA diagnostics toolkit
+# Copyright (c) 2025 Thor Thor (codethor0)
+# Project: github.com/codethor0/dilivet
 # LinkedIn: https://www.linkedin.com/in/thor-thor0
-# SPDX-License-Identifier: MIT
 
 name: Fuzz
 
@@ -50,9 +50,9 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
+          key: dilivet-v1-fuzz-${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+            dilivet-v1-fuzz-${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Fuzz decode public key
         run: go test -fuzz=FuzzDecodePublicKey -fuzztime=1m ./fuzz
