@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+
+title: "DiliVet: diagnostics and vetting toolkit for ML-DSA signature implementations"
+
+version: "0.2.3"
+
+date-released: 2025-11-10
+
+type: software
+
+authors:
+  - family-names: "Thor"
+    given-names: "Thor"
+    email: "codethor@gmail.com"
+
+repository-code: "https://github.com/codethor0/dilivet"
+
+license: "MIT"
+
+abstract: >
+  DiliVet is a diagnostics and vetting toolkit for ML-DSA (Dilithium-like)
+  signature implementations. It focuses on reproducible known-answer testing,
+  adversarial edge vectors, and deterministic sampling so implementers can
+  catch integration bugs before shipping. The CLI also exposes
+  interoperability helpers for exercising third-party signers and verifiers,
+  plus reproducible release artifacts with cosign and SLSA provenance to keep
+  the supply chain transparent.
+
+keywords:
+  - ML-DSA
+  - Dilithium
+  - post-quantum cryptography
+  - signatures
+  - diagnostics
+  - fuzzing
+  - reproducibility
+  - supply-chain security
+

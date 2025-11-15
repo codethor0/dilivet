@@ -1,4 +1,7 @@
-[![Tip](https://img.shields.io/badge/Tip-❤-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01) [![Monthly](https://img.shields.io/badge/Monthly-♻️-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
+<!--
+DiliVet – ML-DSA diagnostics and vetting toolkit
+Author: Thor "Thor Thor" (codethor@gmail.com, https://www.linkedin.com/in/thor-thor0)
+-->
 
 ![DiliVet Banner](assets/branding/dilivet-banner.png)
 
@@ -149,6 +152,14 @@ done
 ## Contributing
 
 See `CONTRIBUTING.md` for the developer quick loop, testing, and release notes.
+
+## Citation
+
+If you use DiliVet in your research or work, please cite it. GitHub provides a "Cite this repository" button in the repository sidebar that generates citations in various formats (APA, BibTeX, etc.) based on `CITATION.cff`.
+
+Alternatively, you can reference:
+
+> Thor, T. (2025). DiliVet: diagnostics and vetting toolkit for ML-DSA signature implementations (Version 0.2.3) [Computer software]. https://github.com/codethor0/dilivet
 
 ## License
 
