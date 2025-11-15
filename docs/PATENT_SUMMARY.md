@@ -7,6 +7,47 @@
 
 ---
 
+## Patent Package Review Checklist
+
+**Use this checklist before sending the patent package to an attorney or stakeholders.**
+
+### 1. Technical Consistency
+
+- [ ] Do all three docs (INVENTION_DISCLOSURE, PATENT_DRAFT, PATENT_SUMMARY) describe the same 5 core innovations?
+- [ ] Are the names consistent? ("DiliVet", "ML-DSA diagnostics and vetting toolkit", "Dilithium-like signatures")
+- [ ] Are the version numbers and dates correct (v0.2.3, 2025, etc.)?
+- [ ] Do the described components (CLI, harness, fuzz targets, interop hooks, provenance pipeline) actually exist in the current repo?
+
+### 2. Claim–Implementation Match
+
+- [ ] For each independent claim, can you point to:
+  - A specific module / function / design pattern in the repo, OR
+  - A clearly described algorithm in the technical disclosure?
+- [ ] Are there claims that describe functionality you *haven't* implemented yet?
+  - If yes, mark them clearly as "planned embodiment" in your notes so your attorney can decide whether to keep, narrow, or drop them.
+
+### 3. Prior Art Sanity Check
+
+- [ ] Have you named the most obvious comparables? (e.g., ACVP test harnesses, NIST KAT tools, existing PQC test suites)
+- [ ] For each of your 5 innovations, is it clear:
+  - What existing tools do today, and
+  - What exactly your approach does differently?
+
+### 4. Tradeoffs and Scope
+
+- [ ] Are there parts of the implementation that are "nice engineering" but not really patent material? (Refactoring, logging, generic CLI flags)
+- [ ] Are there any internals you'd *prefer* to keep as trade secrets instead of putting in a patent? If so, mark those for a conversation with your attorney.
+
+### 5. Cleanliness
+
+- [ ] No TODO / FIXME / "this is probably wrong" comments in the patent docs.
+- [ ] No emojis, casual jokes, or references that will distract a reviewer.
+- [ ] All links resolve: repo, releases, docs paths.
+
+**Once this checklist looks good, the package is ready for a patent attorney review.**
+
+---
+
 ## Quick Reference
 
 ### Documents Created
