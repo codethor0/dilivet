@@ -32,8 +32,8 @@ cleanup() {
 # Set trap to cleanup on exit
 trap cleanup EXIT
 
-# Step 1: Start lab profile server
-echo "[screenshot] Step 1/3: Starting lab profile server..."
+# Step 1: Start local profile server (no auth for screenshots)
+echo "[screenshot] Step 1/3: Starting local profile server (no auth)..."
 # Stop any existing server first
 pkill -f 'go run ./web/server' || true
 lsof -ti:8080 | xargs kill -9 2>/dev/null || true
@@ -46,14 +46,12 @@ if [ ! -d "./web/ui/dist" ]; then
   (cd web/ui && npm install --silent && npm run build --silent)
 fi
 
-# Start server using go run (more reliable than Docker for this use case)
-echo "[screenshot] Starting server with lab profile..."
+# Start server using local profile (no auth required)
+echo "[screenshot] Starting server with local profile (no auth)..."
 export MAX_BODY_SIZE=10485760
 export REQUEST_TIMEOUT=30s
-export ALLOWED_ORIGINS="http://localhost:8080,http://localhost:3000"
-export REQUIRE_AUTH=true
-export AUTH_TOKEN=$(openssl rand -hex 32)
-echo "$AUTH_TOKEN" > /tmp/dilivet-auth-token.txt
+export ALLOWED_ORIGINS="*"
+export REQUIRE_AUTH=false
 
 PORT=8080 go run ./web/server >/tmp/dilivet-screenshot-server.log 2>&1 &
 SERVER_PID=$!
@@ -66,22 +64,11 @@ MAX_WAIT=60
 WAIT_COUNT=0
 HEALTH_URL="http://localhost:8080/api/health"
 
-# Load AUTH_TOKEN
-AUTH_TOKEN="${AUTH_TOKEN:-$(cat /tmp/dilivet-auth-token.txt 2>/dev/null || echo '')}"
-
 while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-  # Try with auth token
-  if [ -n "$AUTH_TOKEN" ]; then
-    if curl -s -f -H "Authorization: Bearer $AUTH_TOKEN" "$HEALTH_URL" >/dev/null 2>&1; then
-      echo "[screenshot] ✅ Server is ready"
-      break
-    fi
-  else
-    # Try without auth (fallback)
-    if curl -s -f "$HEALTH_URL" >/dev/null 2>&1; then
-      echo "[screenshot] ✅ Server is ready"
-      break
-    fi
+  # No auth required for local profile
+  if curl -s -f "$HEALTH_URL" >/dev/null 2>&1; then
+    echo "[screenshot] ✅ Server is ready"
+    break
   fi
   WAIT_COUNT=$((WAIT_COUNT + 1))
   if [ $((WAIT_COUNT % 5)) -eq 0 ]; then
@@ -105,11 +92,9 @@ cd "$REPO_ROOT/tests/e2e"
 # Ensure assets directory exists
 mkdir -p "$REPO_ROOT/docs/assets"
 
-# Export AUTH_TOKEN for Playwright test (if needed)
-export AUTH_TOKEN
-
+# No auth token needed for local profile
 # Run screenshot test
-if BASE_URL="http://localhost:8080" AUTH_TOKEN="$AUTH_TOKEN" npx playwright test tests/screenshot.spec.ts --project=chromium; then
+if BASE_URL="http://localhost:8080" npx playwright test tests/screenshot.spec.ts --project=chromium; then
   echo "[screenshot] ✅ Screenshot test passed"
 else
   echo "[screenshot] ERROR: Screenshot test failed"
