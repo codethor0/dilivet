@@ -105,19 +105,34 @@ cd "$REPO_ROOT/tests/e2e"
 # Ensure assets directory exists
 mkdir -p "$REPO_ROOT/docs/assets"
 
+# Export AUTH_TOKEN for Playwright test (if needed)
+export AUTH_TOKEN
+
 # Run screenshot test
-if BASE_URL="http://localhost:8080" npx playwright test tests/screenshot.spec.ts --project=chromium; then
+if BASE_URL="http://localhost:8080" AUTH_TOKEN="$AUTH_TOKEN" npx playwright test tests/screenshot.spec.ts --project=chromium; then
   echo "[screenshot] ✅ Screenshot test passed"
 else
   echo "[screenshot] ERROR: Screenshot test failed"
   exit 1
 fi
 
-# Verify screenshot exists
+# Verify screenshot exists and is a valid PNG
 SCREENSHOT_PATH="$REPO_ROOT/docs/assets/dilivet-web-ui.png"
 if [ -f "$SCREENSHOT_PATH" ]; then
   FILE_SIZE=$(stat -f%z "$SCREENSHOT_PATH" 2>/dev/null || stat -c%s "$SCREENSHOT_PATH" 2>/dev/null || echo "0")
   echo "[screenshot] ✅ Screenshot saved: $SCREENSHOT_PATH ($(numfmt --to=iec-i --suffix=B $FILE_SIZE 2>/dev/null || echo "${FILE_SIZE} bytes"))"
+  
+  # Verify PNG magic bytes (89 50 4E 47)
+  PNG_MAGIC=$(head -c 4 "$SCREENSHOT_PATH" | hexdump -C | head -1)
+  if echo "$PNG_MAGIC" | grep -qE "89 50 4e 47|89504e47"; then
+    echo "[screenshot] ✅ PNG magic bytes verified (valid PNG)"
+  else
+    echo "[screenshot] ❌ ERROR: File does not have PNG magic bytes!"
+    echo "[screenshot] First 4 bytes: $PNG_MAGIC"
+    echo "[screenshot] Expected: 89 50 4e 47 (PNG signature)"
+    echo "[screenshot] File may contain JSON or other non-PNG content"
+    exit 1
+  fi
 else
   echo "[screenshot] ERROR: Screenshot file not found at $SCREENSHOT_PATH"
   exit 1

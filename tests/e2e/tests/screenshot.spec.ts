@@ -24,6 +24,14 @@ test.describe('Screenshot Capture', () => {
       fs.mkdirSync(assetsDir, { recursive: true })
     }
 
+    // Set auth header if AUTH_TOKEN is provided (for lab profile)
+    const authToken = process.env.AUTH_TOKEN
+    if (authToken) {
+      await page.setExtraHTTPHeaders({
+        'Authorization': `Bearer ${authToken}`
+      })
+    }
+
     // Navigate to dashboard and wait for page to load
     await page.goto('/', { waitUntil: 'networkidle' })
 
