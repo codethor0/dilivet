@@ -23,7 +23,8 @@ env:
 
 jobs:
   build-and-test:
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    # Only run on version tags or manual dispatch
+    if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     name: build and test
     runs-on: ubuntu-latest
     steps:
