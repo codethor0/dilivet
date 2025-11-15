@@ -28,7 +28,7 @@ concurrency:
 env:
   DISK_CAP_GB: 10
   MAX_LOG_MB: 5
-  GO_VERSION: '1.24.x'
+  GO_VERSION: '1.23'
 
 jobs:
   # Fast preflight: lint and types before full test suite
@@ -75,10 +75,10 @@ jobs:
           go clean -cache -modcache -testcache 2>/dev/null || true
 
   test:
-    name: go 1.24.x • ${{ matrix.os }}
+    name: go 1.23 • ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [preflight]
-    if: always() && (needs.preflight.result == 'success' || github.event_name != 'pull_request')
+    if: always() && (needs.preflight.result == 'success' || needs.preflight.result == 'skipped' || github.event_name != 'pull_request')
     strategy:
       fail-fast: false
       matrix:
@@ -104,9 +104,9 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-1.24.x-${{ hashFiles('go.sum') }}
+          key: ${{ runner.os }}-go-1.23-${{ hashFiles('go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-1.24.x-
+            ${{ runner.os }}-go-1.23-
 
       - name: go vet
         run: go vet ./...

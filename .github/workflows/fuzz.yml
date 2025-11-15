@@ -23,7 +23,7 @@ concurrency:
 env:
   DISK_CAP_GB: 10
   MAX_LOG_MB: 5
-  GO_VERSION: '1.24.x'
+  GO_VERSION: '1.23'
 
 jobs:
   fuzz:
