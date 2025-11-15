@@ -40,8 +40,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check disk space
+        shell: bash
         run: |
-          df -h
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            df -h || echo "df command not available"
+          fi
           echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
 
       - name: Setup Go
