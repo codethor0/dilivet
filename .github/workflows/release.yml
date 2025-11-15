@@ -22,13 +22,6 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
-  noop:
-    if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "workflow_dispatch without tag ref; nothing to release."
-        continue-on-error: true
-
   build:
     if: startsWith(github.ref, 'refs/tags/v')
     name: build ${{ matrix.goos }}-${{ matrix.goarch }}
