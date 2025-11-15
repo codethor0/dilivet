@@ -134,6 +134,27 @@ done
 
 **Path filters**: CI only runs on PRs when Go files, `go.mod`, `go.sum`, or workflow files change. Push to `main` always triggers full runs.
 
+## Web UI
+
+DiliVet includes a web interface for running diagnostics from a browser. See [docs/WEB_UI.md](docs/WEB_UI.md) for details.
+
+**Quick start:**
+
+```bash
+# Start the backend server
+go run ./web/server
+
+# In another terminal, start the frontend dev server
+cd web/ui && npm install && npm run dev
+```
+
+The web UI provides:
+- Signature verification with a user-friendly form
+- KAT (known-answer test) verification with detailed results
+- Dashboard with server health status
+
+**Note:** The web UI is diagnostics tooling and should be used in controlled environments only. It is not hardened for untrusted multi-tenant deployments.
+
 ## Where to look
 
 - `cmd/` — CLI entrypoints (`dilivet`, `mldsa-vet`)
