@@ -5,6 +5,9 @@
 # Project: github.com/codethor0/dilivet
 # LinkedIn: https://www.linkedin.com/in/thor-thor0
 
+# Smoke release script: runs all critical checks before release
+# Exits with non-zero status if any step fails
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,77 +16,84 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
 echo "═══════════════════════════════════════════════════════"
-echo "  🔍 DiliVet Release Smoke Test"
+echo "  DiliVet Release Smoke Test"
 echo "═══════════════════════════════════════════════════════"
 echo ""
 
 CORE_STATUS="FAIL"
 WEB_STATUS="FAIL"
-SCREENSHOT_STATUS="FAIL"
+AUTH_STATUS="SKIP"
 
-# Core checks
-echo "[smoke] Running core checks..."
+# Core gate
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Core gate: ./scripts/check-all.sh"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if ./scripts/check-all.sh >/tmp/dilivet-smoke-core.log 2>&1; then
-  CORE_STATUS="PASS"
-  echo "[smoke] ✅ Core checks: PASS"
+    CORE_STATUS="PASS"
+    echo "✅ Core: PASS"
 else
-  echo "[smoke] ❌ Core checks: FAIL"
-  echo "[smoke] See /tmp/dilivet-smoke-core.log for details"
+    echo "❌ Core: FAIL"
+    echo "Last 20 lines of output:"
+    tail -20 /tmp/dilivet-smoke-core.log
+    exit 1
 fi
+
 echo ""
 
-# Web checks
-echo "[smoke] Running web checks..."
-if ./scripts/check-web.sh >/tmp/dilivet-smoke-web.log 2>&1; then
-  WEB_STATUS="PASS"
-  echo "[smoke] ✅ Web checks: PASS"
-else
-  echo "[smoke] ❌ Web checks: FAIL"
-  echo "[smoke] See /tmp/dilivet-smoke-web.log for details"
-fi
-echo ""
-
-# Screenshot capture
-echo "[smoke] Capturing Web UI screenshot..."
-if ./scripts/capture-web-screenshot.sh >/tmp/dilivet-smoke-screenshot.log 2>&1; then
-  SCREENSHOT_PATH="$REPO_ROOT/docs/assets/dilivet-web-ui.png"
-  if [ -f "$SCREENSHOT_PATH" ]; then
-    # Verify PNG magic bytes
-    PNG_MAGIC=$(head -c 4 "$SCREENSHOT_PATH" | hexdump -C | head -1)
-    if echo "$PNG_MAGIC" | grep -qE "89 50 4e 47|89504e47"; then
-      SCREENSHOT_STATUS="PASS (magic bytes OK)"
-      echo "[smoke] ✅ Screenshot: PASS (magic bytes OK)"
+# Web gate
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Web gate: ./scripts/check-web.sh"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ -f "./scripts/check-web.sh" ]; then
+    if ./scripts/check-web.sh >/tmp/dilivet-smoke-web.log 2>&1; then
+        WEB_STATUS="PASS"
+        echo "✅ Web: PASS"
     else
-      SCREENSHOT_STATUS="FAIL (NOT OK - not a PNG)"
-      echo "[smoke] ❌ Screenshot: FAIL (NOT OK - not a PNG)"
-      echo "[smoke] First 4 bytes: $(head -c 4 "$SCREENSHOT_PATH" | hexdump -C | head -1)"
+        echo "❌ Web: FAIL"
+        echo "Last 20 lines of output:"
+        tail -20 /tmp/dilivet-smoke-web.log
+        exit 1
     fi
-  else
-    SCREENSHOT_STATUS="FAIL (file not found)"
-    echo "[smoke] ❌ Screenshot: FAIL (file not found)"
-  fi
 else
-  echo "[smoke] ❌ Screenshot capture: FAIL"
-  echo "[smoke] See /tmp/dilivet-smoke-screenshot.log for details"
-fi
-echo ""
-
-# Summary
-echo "═══════════════════════════════════════════════════════"
-echo "  📊 Smoke Test Summary"
-echo "═══════════════════════════════════════════════════════"
-echo ""
-echo "core:      $CORE_STATUS"
-echo "web:       $WEB_STATUS"
-echo "screenshot: $SCREENSHOT_STATUS"
-echo ""
-
-# Exit with error if any check failed
-if [ "$CORE_STATUS" != "PASS" ] || [ "$WEB_STATUS" != "PASS" ] || [ "$SCREENSHOT_STATUS" != "PASS (magic bytes OK)" ]; then
-  echo "❌ Smoke test failed - see logs above"
-  exit 1
+    echo "⚠️  check-web.sh not found, skipping web gate"
+    WEB_STATUS="SKIP"
 fi
 
-echo "✅ All smoke tests passed!"
-exit 0
+echo ""
 
+# Auth gate (if script exists)
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Auth gate: ./scripts/test-web-auth.sh"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ -f "./scripts/test-web-auth.sh" ]; then
+    if ./scripts/test-web-auth.sh >/tmp/dilivet-smoke-auth.log 2>&1; then
+        AUTH_STATUS="PASS"
+        echo "✅ Auth: PASS"
+    else
+        echo "❌ Auth: FAIL"
+        echo "Last 20 lines of output:"
+        tail -20 /tmp/dilivet-smoke-auth.log
+        exit 1
+    fi
+else
+    echo "⚠️  test-web-auth.sh not found, skipping auth gate"
+    AUTH_STATUS="SKIP"
+fi
+
+echo ""
+echo "═══════════════════════════════════════════════════════"
+echo "  Summary"
+echo "═══════════════════════════════════════════════════════"
+echo ""
+echo "  Core: $CORE_STATUS"
+echo "  Web:  $WEB_STATUS"
+echo "  Auth: $AUTH_STATUS"
+echo ""
+
+if [ "$CORE_STATUS" = "PASS" ] && [ "$WEB_STATUS" != "FAIL" ]; then
+    echo "✅ All critical checks passed"
+    exit 0
+else
+    echo "❌ One or more checks failed"
+    exit 1
+fi

@@ -23,7 +23,7 @@ env:
 
 jobs:
   build-and-test:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     name: build and test
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +57,7 @@ jobs:
           go clean -cache -modcache -testcache 2>/dev/null || true
 
   build:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     name: build ${{ matrix.goos }}-${{ matrix.goarch }}
     runs-on: ubuntu-latest
     needs: build-and-test
@@ -124,7 +124,7 @@ jobs:
           go clean -cache -modcache -testcache 2>/dev/null || true
 
   checksums:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -145,7 +145,7 @@ jobs:
           retention-days: 90
 
   sbom:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -175,7 +175,7 @@ jobs:
           retention-days: 90
 
   provenance:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     needs: [build, checksums]
     runs-on: ubuntu-latest
     permissions:
@@ -203,7 +203,7 @@ jobs:
         continue-on-error: true
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     needs: [checksums, sbom]
     runs-on: ubuntu-latest
     steps:
