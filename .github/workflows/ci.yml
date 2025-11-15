@@ -71,7 +71,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          du -sh ~/.cache/go-build ~/go/pkg/mod 2>/dev/null || true
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            du -sh ~/.cache/go-build ~/go/pkg/mod 2>/dev/null || true
+          fi
           go clean -cache -modcache -testcache 2>/dev/null || true
 
   test:
@@ -88,8 +90,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check disk space
+        shell: bash
         run: |
-          df -h
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            df -h || echo "df command not available"
+          fi
           echo "DISK_CAP_GB=${DISK_CAP_GB}" >> $GITHUB_ENV
           echo "MAX_LOG_MB=${MAX_LOG_MB}" >> $GITHUB_ENV
 
@@ -123,6 +128,7 @@ jobs:
 
       - name: Cleanup and report
         if: always()
+        shell: bash
         run: |
           echo "=== Disk usage before cleanup ==="
           if [ "${{ runner.os }}" != "Windows" ]; then
@@ -137,4 +143,6 @@ jobs:
             df -h || echo "df command not available"
             echo "=== Total disk usage ==="
             df -h | tail -1 | awk '{print "Total: " $2 ", Used: " $3 ", Available: " $4}' || true
+          else
+            echo "Cleanup complete on Windows runner"
           fi
